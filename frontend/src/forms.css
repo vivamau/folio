@@ -1,0 +1,256 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #112d3866;
+  backdrop-filter: blur(4px);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+}
+.modal {
+  width: 660px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fffefb;
+  border: 1px solid #e6e7df;
+  border-radius: 13px;
+  padding: 27px;
+  box-shadow: 0 25px 100px #122c3633;
+}
+.modal > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.modal h2 {
+  font:
+    27px Georgia,
+    serif;
+  margin-top: 7px;
+}
+.modal p {
+  line-height: 1.7;
+  color: #738075;
+  font-size: 13px;
+}
+form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  color: #677a6b;
+  margin: 14px 0;
+}
+form input,
+form select,
+form textarea {
+  border: 1px solid #dce3d7;
+  border-radius: 5px;
+  background: #fff;
+  padding: 11px;
+  color: #2c4136;
+  min-width: 0;
+  width: 100%;
+  font-size: 13px;
+}
+form textarea {
+  resize: vertical;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+.form-grid label {
+  margin-top: 0;
+}
+.form-grid label:nth-child(3) {
+  grid-column: 1/-1;
+}
+.section-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #71836f;
+  margin-top: 14px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+.section-label span {
+  font-size: 9px;
+  letter-spacing: 0;
+  color: #96a28f;
+}
+.line-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 28px;
+  gap: 10px;
+  align-items: center;
+}
+.line-item label {
+  font-size: 9px;
+}
+.line-item .icon-button {
+  margin-top: 20px;
+}
+.form-footer {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+.form-footer strong {
+  display: block;
+  font:
+    25px Georgia,
+    serif;
+  margin-top: 7px;
+}
+.form-footer > span {
+  font-size: 10px;
+  color: #9ba691;
+}
+.notice {
+  background: #f6f0dd;
+  color: #826933;
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  margin-bottom: 17px;
+  line-height: 1.5;
+}
+.notice.error {
+  background: #f9eae5;
+  color: #a14839;
+}
+.notice button {
+  background: transparent;
+  color: inherit;
+  text-decoration: underline;
+  margin-left: 10px;
+}
+.loading-screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  color: #547462;
+}
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.login-story {
+  background: #172f35;
+  color: #dce8d9;
+  padding: 45px 65px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 45px;
+  min-height: 100vh;
+}
+.login-story .eyebrow {
+  color: #b2c2b0;
+}
+.login-story h1 {
+  font:
+    65px/1.03 Georgia,
+    serif;
+  letter-spacing: -2px;
+  margin: 20px 0;
+}
+.login-story p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #a3b6b0;
+}
+.login-story > small {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #88a49a;
+}
+.login-art {
+  margin-top: 40px;
+  background: #dfe6d1;
+  color: #284636;
+  width: 290px;
+  max-width: 100%;
+  padding: 25px 28px;
+  transform: rotate(-5deg);
+  border-radius: 4px;
+  box-shadow: 9px 9px 0 #355247;
+}
+.login-art > span {
+  font-size: 8px;
+  letter-spacing: 1.6px;
+}
+.login-art i {
+  display: block;
+  border-bottom: 1px solid #b4c3a6;
+  margin-top: 14px;
+}
+.login-art i:nth-of-type(2) {
+  width: 80%;
+}
+.login-art i:nth-of-type(3) {
+  width: 60%;
+}
+.login-art strong {
+  font:
+    23px/1.15 Georgia,
+    serif;
+  display: block;
+  margin-top: 25px;
+}
+.login-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 45px;
+  background: #fafaf6;
+}
+.login-form form {
+  width: 330px;
+  max-width: 100%;
+}
+.login-form h2 {
+  font:
+    34px Georgia,
+    serif;
+  letter-spacing: -1px;
+  margin: 15px 0;
+}
+.login-form p {
+  font-size: 12px;
+  color: #8c998d;
+  margin-bottom: 35px;
+}
+.login-form label {
+  margin: 20px 0;
+}
+.login-form .button {
+  width: 100%;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 14px 18px;
+}
+.login-help {
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.8;
+  color: #9aa590;
+  margin-top: 25px;
+}

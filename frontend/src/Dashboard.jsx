@@ -1,0 +1,160 @@
+import React from "react";
+import {
+  ArrowUpRight,
+  Receipt,
+  Store,
+  Wallet,
+  ChartNoAxesColumnIncreasing,
+} from "lucide-react";
+import { money, summarize } from "./format";
+export default function Dashboard({ invoices, currency }) {
+  const stats = summarize(invoices, currency);
+  const cards = [
+    [
+      "Total spending",
+      money(stats.total, currency),
+      Wallet,
+      "Across the selected period",
+    ],
+    [
+      "Expenses recorded",
+      String(stats.count).padStart(2, "0"),
+      Receipt,
+      "Every purchase, accounted for",
+    ],
+    [
+      "Average expense",
+      money(stats.average, currency),
+      ChartNoAxesColumnIncreasing,
+      "Per recorded expense",
+    ],
+    [
+      "Shops visited",
+      String(stats.shops).padStart(2, "0"),
+      Store,
+      "Places in your ledger",
+    ],
+  ];
+  const max = Math.max(...stats.months.map((m) => m[1]), 1);
+  return (
+    <>
+      <div className="stats-grid">
+        {cards.map(([label, value, Icon, hint], i) => (
+          <section
+            className={`stat-card ${i === 0 ? "featured" : ""}`}
+            key={label}
+          >
+            <div className="stat-label">
+              {label}
+              <Icon size={18} />
+            </div>
+            <strong>{value}</strong>
+            <small>{hint}</small>
+          </section>
+        ))}
+      </div>
+      <div className="insights-grid">
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <span className="eyebrow">THE BIG PICTURE</span>
+              <h2>Spending over time</h2>
+            </div>
+            <span className="subtle-pill">{currency} · Monthly</span>
+          </div>
+          {stats.months.length ? (
+            <div className="bar-chart" role="img" aria-label="Monthly spending">
+              {stats.months.map(([month, value]) => (
+                <div className="bar-column" key={month}>
+                  <span>{money(value, currency)}</span>
+                  <div className="bar-track">
+                    <div
+                      className="bar"
+                      style={{ height: `${Math.max((value / max) * 100, 2)}%` }}
+                    />
+                  </div>
+                  <small>
+                    {new Date(`${month}-02`).toLocaleDateString("en-GB", {
+                      month: "short",
+                      year: "2-digit",
+                    })}
+                  </small>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="chart-empty">
+              <div className="empty-bars">
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+                <i />
+              </div>
+              <p>Your spending story starts here.</p>
+              <small>Add your first expense to see monthly trends.</small>
+            </div>
+          )}
+        </section>
+        <section className="panel category-panel">
+          <div className="panel-heading">
+            <div>
+              <span className="eyebrow">WHERE IT GOES</span>
+              <h2>By category</h2>
+            </div>
+            <ArrowUpRight size={21} />
+          </div>
+          {stats.categories.length ? (
+            <div className="category-list">
+              {stats.categories.map(([name, value], i) => (
+                <div className="category" key={name}>
+                  <div>
+                    <span>
+                      <i
+                        style={{
+                          background: [
+                            "#315d57",
+                            "#d69760",
+                            "#8d9fba",
+                            "#b8aa85",
+                          ][i % 4],
+                        }}
+                      />
+                      {name}
+                    </span>
+                    <strong>{money(value, currency)}</strong>
+                  </div>
+                  <div className="category-track">
+                    <i
+                      style={{
+                        width: `${stats.total ? (value / stats.total) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="category-empty">
+              <TagIllustration />
+              <p>A little more clarity.</p>
+              <small>
+                Categories help you understand
+                <br />
+                where your money goes.
+              </small>
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+function TagIllustration() {
+  return (
+    <div className="tag-illustration" aria-hidden="true">
+      ↗
+    </div>
+  );
+}

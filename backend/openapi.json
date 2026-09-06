@@ -1,0 +1,593 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Folio Expense Tracker API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "security": [
+    {
+      "sessionCookie": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
+      }
+    },
+    "schemas": {
+      "Credentials": {
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string",
+            "format": "password"
+          }
+        }
+      },
+      "CatalogEntry": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "address": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "categoryId": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1
+          },
+          "manufacturerId": {
+            "type": "integer",
+            "nullable": true,
+            "minimum": 1
+          }
+        }
+      },
+      "InvoiceInput": {
+        "type": "object",
+        "required": [
+          "date",
+          "shopId",
+          "currency",
+          "lines"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "shopId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "EUR",
+              "USD",
+              "KES",
+              "GBP",
+              "CHF",
+              "CAD",
+              "AUD"
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "required": [
+                "itemId",
+                "quantity",
+                "unitPrice"
+              ],
+              "properties": {
+                "itemId": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "quantity": {
+                  "type": "number",
+                  "exclusiveMinimum": true,
+                  "minimum": 0,
+                  "maximum": 1000,
+                  "multipleOf": 0.001
+                },
+                "unitPrice": {
+                  "type": "string",
+                  "pattern": "^\\d{1,7}(\\.\\d{1,2})?$",
+                  "example": "12.50"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "shopId": {
+            "type": "integer"
+          },
+          "shop": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "totalCents": {
+            "type": "integer",
+            "nullable": true
+          },
+          "unpriced": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "itemId": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "number"
+                },
+                "unitPriceCents": {
+                  "type": "integer",
+                  "nullable": true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/login": {
+      "post": {
+        "summary": "Sign in; sets a two-hour HttpOnly session cookie",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          },
+          "429": {
+            "description": "Too many login attempts"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credentials"
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/logout": {
+      "post": {
+        "summary": "Clear session cookie",
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        },
+        "security": []
+      }
+    },
+    "/me": {
+      "get": {
+        "summary": "Return id, username, name, canManage and defaultCurrency",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        }
+      }
+    },
+    "/catalog": {
+      "get": {
+        "summary": "List shared shops, items, categories and manufacturers",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        },
+        "description": "Each shop, item, category and manufacturer exposes userId, the creator ID or null for legacy entries. Catalog remains shared."
+      }
+    },
+    "/shops": {
+      "post": {
+        "summary": "Create catalog entry; requires userrole_manageshops",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogEntry"
+              }
+            }
+          }
+        },
+        "description": "Stores user_id from the authenticated user. Client-supplied user IDs are ignored. Returns id and userId."
+      }
+    },
+    "/items": {
+      "post": {
+        "summary": "Create catalog entry; requires userrole_manageshops",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogEntry"
+              }
+            }
+          }
+        },
+        "description": "Stores user_id from the authenticated user. Client-supplied user IDs are ignored. Returns id and userId."
+      }
+    },
+    "/categories": {
+      "post": {
+        "summary": "Create catalog entry; requires userrole_manageshops",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogEntry"
+              }
+            }
+          }
+        },
+        "description": "Stores user_id from the authenticated user. Client-supplied user IDs are ignored. Returns id and userId."
+      }
+    },
+    "/manufacturers": {
+      "post": {
+        "summary": "Create catalog entry; requires userrole_manageshops",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatalogEntry"
+              }
+            }
+          }
+        },
+        "description": "Stores user_id from the authenticated user. Client-supplied user IDs are ignored. Returns id and userId."
+      }
+    },
+    "/invoices": {
+      "get": {
+        "summary": "List only the signed-in user's invoices; unpriced legacy totals are null",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Invoice"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create an expense with its lines atomically",
+        "responses": {
+          "201": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      ],
+      "put": {
+        "summary": "Replace your expense and its lines atomically",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          },
+          "404": {
+            "description": "Expense absent or owned by another user"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceInput"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete your expense and its lines atomically",
+        "responses": {
+          "204": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Origin or permission denied"
+          },
+          "500": {
+            "description": "Internal error"
+          },
+          "404": {
+            "description": "Expense absent or owned by another user"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.env
+backend/data/*
+!backend/data/.gitkeep
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+playwright-report/
+test-results/
+.DS_Store
