@@ -1,3 +1,5 @@
+const { createSnapshotService } = require("./snapshots");
+const { startSnapshotScheduler } = require("./snapshot-scheduler");
 const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
@@ -28,11 +30,17 @@ async function start({ installSignalHandlers = true } = {}) {
     if (filename !== ":memory:" && !fs.existsSync(backup))
       await db.run("VACUUM INTO ?", [backup]);
     await initialize(db, { seedPassword: process.env.SEED_PASSWORD });
+    const snapshotService = createSnapshotService(db, {
+      timeZone: process.env.MONTH_END_TIMEZONE || "Africa/Nairobi",
+    });
     const app = createApp(db, {
       secret: process.env.JWT_SECRET || crypto.randomBytes(48).toString("hex"),
       origin: process.env.APP_ORIGIN || "http://127.0.0.1:5173",
       production,
       defaultCurrency: process.env.DEFAULT_CURRENCY,
+      snapshotOptions: {
+        timeZone: process.env.MONTH_END_TIMEZONE || "Africa/Nairobi",
+      },
     });
     const dist = path.join(__dirname, "..", "dist");
     if (fs.existsSync(dist)) {
@@ -51,10 +59,13 @@ async function start({ installSignalHandlers = true } = {}) {
       server.once?.("error", reject);
     });
     console.log(`Folio is ready at http://127.0.0.1:${server.address().port}`);
-    const stop = () =>
-      new Promise((resolve, reject) =>
+    const scheduler = startSnapshotScheduler(snapshotService);
+    const stop = async () => {
+      await scheduler.stop();
+      return new Promise((resolve, reject) =>
         server.close(() => db.close().then(resolve, reject)),
       );
+    };
     if (installSignalHandlers) {
       const shutdown = () => stop().then(() => process.exit(0));
       process.once("SIGTERM", shutdown);

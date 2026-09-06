@@ -53,7 +53,18 @@ function parse(schema, value) {
   }
   return result.data;
 }
+const summarySchema = z
+  .object({
+    title: z.string().trim().max(120).default(""),
+    from: date,
+    to: date,
+  })
+  .refine(
+    (value) => value.from <= value.to,
+    "Start date must be before end date",
+  );
 module.exports = {
+  summarySchema,
   invoiceSchema,
   catalogSchema,
   filterSchema,

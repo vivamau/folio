@@ -54,3 +54,52 @@ test("creator migration preserves legacy catalog rows with an unknown creator", 
     await db.close();
   }
 });
+
+test("ad hoc migration preserves existing monthly pictures, rates and immutability", async () => {
+  const db = await openDatabase(":memory:");
+  try {
+    await db.exec(
+      "CREATE TABLE IF NOT EXISTS SchemaMigrations (name TEXT PRIMARY KEY,applied_at INTEGER NOT NULL)",
+    );
+    for (const name of [
+      "001_initial.sql",
+      "002_expense_amounts.sql",
+      "003_catalog_creators.sql",
+      "004_monthly_snapshots.sql",
+    ]) {
+      await db.exec(
+        await fs.readFile(path.resolve("backend/migrations", name), "utf8"),
+      );
+      await db.run("INSERT INTO SchemaMigrations VALUES (?,0)", [name]);
+    }
+    await db.run(
+      "INSERT INTO Users (ID,user_username,user_email) VALUES (1,'existing','existing@localhost')",
+    );
+    await db.run(
+      "INSERT INTO MonthlySnapshots (ID,user_id,month,cutoff_date,timezone,captured_at,payload_json,status,rates_json,totals_json) VALUES (42,1,'2026-08','2026-08-31','Africa/Nairobi','2026-09-01T00:00:00Z','{\"invoiceCount\":1}','ready','{\"base\":\"EUR\"}','{\"EUR\":100}')",
+    );
+    await db.run(
+      "INSERT INTO MonthlyExchangeRates VALUES ('2026-08','{\"base\":\"EUR\"}')",
+    );
+    await initialize(db);
+    await initialize(db);
+    const row = await db.get("SELECT * FROM MonthlySnapshots WHERE ID=42");
+    expect(row).toMatchObject({
+      kind: "monthly",
+      from_date: "2026-08-01",
+      to_date: "2026-08-31",
+      payload_json: '{"invoiceCount":1}',
+      totals_json: '{"EUR":100}',
+    });
+    expect(
+      await db.get(
+        "SELECT * FROM SnapshotExchangeRates WHERE reference_date='2026-08-31'",
+      ),
+    ).toEqual({ reference_date: "2026-08-31", rates_json: '{"base":"EUR"}' });
+    await expect(
+      db.run("UPDATE MonthlySnapshots SET title='Changed' WHERE ID=42"),
+    ).rejects.toThrow();
+  } finally {
+    await db.close();
+  }
+});

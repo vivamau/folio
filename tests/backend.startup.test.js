@@ -1,3 +1,8 @@
+jest.mock("../backend/snapshot-scheduler", () => ({
+  startSnapshotScheduler: jest.fn(() => ({
+    stop: jest.fn().mockResolvedValue(),
+  })),
+}));
 const { EventEmitter } = require("node:events");
 jest.mock("node:fs", () => ({
   existsSync: jest.fn(() => false),
@@ -141,4 +146,14 @@ test("startup registers a graceful termination handler", async () => {
   await handler();
   expect(db.close).toHaveBeenCalled();
   expect(exit).toHaveBeenCalledWith(0);
+});
+
+test("startup connects the month-end scheduler", async () => {
+  const { startSnapshotScheduler } = require("../backend/snapshot-scheduler");
+  const result = await start({ installSignalHandlers: false });
+  expect(startSnapshotScheduler).toHaveBeenCalledWith(
+    expect.objectContaining({ run: expect.any(Function) }),
+  );
+  await result.stop();
+  expect(startSnapshotScheduler.mock.results[0].value.stop).toHaveBeenCalled();
 });

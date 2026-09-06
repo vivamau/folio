@@ -186,6 +186,98 @@
             }
           }
         }
+      },
+      "MonthlySnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "month": {
+            "type": "string",
+            "example": "2026-08"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready"
+            ]
+          },
+          "capturedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "cutoffDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "catchUp": {
+            "type": "boolean"
+          },
+          "invoiceCount": {
+            "type": "integer"
+          },
+          "pricedCount": {
+            "type": "integer"
+          },
+          "unpricedCount": {
+            "type": "integer"
+          },
+          "originalTotals": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Original minor-unit totals keyed by currency."
+          },
+          "totals": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Same combined spending expressed separately in each supported currency, in minor units."
+          },
+          "rates": {
+            "type": "object",
+            "nullable": true,
+            "description": "Provider, URL, requested date, base EUR, rates and individual publication dates."
+          },
+          "invoices": {
+            "type": "array",
+            "description": "Frozen invoice details; returned by detail endpoint only.",
+            "items": {
+              "$ref": "#/components/schemas/Invoice"
+            }
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "ad_hoc"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "fromDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "toDate": {
+            "type": "string",
+            "format": "date"
+          }
+        }
       }
     }
   },
@@ -585,6 +677,116 @@
           },
           "404": {
             "description": "Expense absent or owned by another user"
+          }
+        }
+      }
+    },
+    "/snapshots": {
+      "get": {
+        "summary": "List the authenticated user's monthly and ad hoc summaries, newest capture first",
+        "responses": {
+          "200": {
+            "description": "Snapshots without invoice details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MonthlySnapshot"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sign in required"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a private immutable ad hoc summary immediately",
+        "description": "Captures an inclusive date range, uses end-date reference rates, and does not change automatic monthly summaries. End date cannot exceed today in the configured snapshot timezone. Returns ready or pending if exchange rates are unavailable.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "from": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "to": {
+                    "type": "string",
+                    "format": "date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Saved snapshot with frozen details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlySnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date range or title"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/snapshots/{id}": {
+      "get": {
+        "summary": "Read a frozen monthly picture belonging to the authenticated user",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot with original invoice details and saved conversions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonthlySnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid id"
+          },
+          "401": {
+            "description": "Sign in required"
+          },
+          "404": {
+            "description": "Not found or belongs to another user"
           }
         }
       }

@@ -304,3 +304,23 @@ test("saving an expense selects its currency and clears filters that would hide 
   expect(screen.getByLabelText("To date")).toHaveValue("");
   expect(await screen.findByText("Market")).toBeVisible();
 });
+
+test('shop deletion confirms, handles linked expenses and refreshes the catalog', async () => {
+  render(<App />);
+  await screen.findByText('Spending overview');
+  fireEvent.click(screen.getByRole('button', {name:'Shops & items'}));
+  fireEvent.click(screen.getByRole('button', {name:'Delete shop Market'}));
+  fireEvent.click(screen.getByRole('button', {name:'Keep shop'}));
+  expect(api.delete).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', {name:'Delete shop Market'}));
+  api.delete.mockRejectedValueOnce({response:{data:{error:'Cannot delete a shop with related expenses.'}}});
+  fireEvent.click(screen.getByRole('button', {name:'Delete permanently'}));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Cannot delete a shop with related expenses.');
+  expect(screen.getByRole('dialog')).toBeVisible();
+  const previousGet = api.get.getMockImplementation();
+  api.get.mockImplementation(url => url === '/catalog' ? Promise.resolve({data:{...catalog,shops:[]}}) : previousGet(url));
+  fireEvent.click(screen.getByRole('button', {name:'Delete permanently'}));
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(api.delete).toHaveBeenLastCalledWith('/shops/1');
+  await waitFor(() => expect(screen.queryByRole('button', {name:'Delete shop Market'})).not.toBeInTheDocument());
+});

@@ -33,3 +33,15 @@ To restore, stop the service, replace the database with your known-good backup, 
 Run `pnpm admin:password admin` from the project directory with the same `DB_PATH` configuration. The password prompt is hidden; the command does not create users. Password changes invalidate existing sessions for that account. Existing accounts can maintain separate expense ledgers; the initial catalog-management permission belongs to `admin`.
 
 In development, omitting JWT_SECRET generates an in-memory secret; restarting the server signs users out. Production refuses to start without a sufficiently long configured secret.
+
+## Automatic month-end snapshots
+
+Keep the Node service running continuously under your service manager. The built-in scheduler starts after database initialization, checks immediately and every minute, and drains in-flight work on graceful shutdown. No OS cron job, Codex automation, account or API key is required. Set `MONTH_END_TIMEZONE` to a valid IANA timezone before startup; the default is `Africa/Nairobi`. Keep this setting stable once snapshots exist.
+
+Allow outbound HTTPS to `api.frankfurter.dev`. Each historical request has a ten-second timeout. FX outages do not stop the API: invoice data is frozen first, and pending conversions retry hourly. Existing cached month-end rates are reused across users. Completed snapshots and their original contents are immutable; `MonthlySnapshotCursors` records progress durably, including empty months. Do not edit snapshot tables or cursor state by hand.
+
+When the process is offline at month-end, the next start catches up. Such snapshots explicitly identify the later capture and contain data as it exists then; they are not a reconstruction of edits made during downtime. Initial history starts at the earliest recorded expense per user (or the installation month for users without earlier expenses). Missed history is processed in bounded batches, and all later months—including empty ones—are captured automatically. Monitor server logs for `Monthly snapshot job failed` (storage/job errors) and the Monthly summaries page for rates pending.
+
+Back up the whole SQLite database: snapshot content, FX cache, and scheduler cursors live there alongside the expense ledger. Restoring only live invoices will lose the frozen historical pictures.
+
+Migration `005_ad_hoc_summaries.sql` preserves existing monthly snapshot IDs/content while allowing multiple independent ad hoc captures. Monthly uniqueness is enforced by a partial index; ad hoc captures never change cursors. The historical-rate cache is now `SnapshotExchangeRates`, keyed by the exact reference date, and existing monthly cached rates are migrated. Immediate creation attempts a rate lookup before responding; the existing hourly retry job also handles pending ad hoc summaries.

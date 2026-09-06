@@ -39,9 +39,9 @@ Every user has a private expense ledger. Catalog entries are shared; catalog wri
 - Existing user and role rows are preserved. Empty tables alone trigger seeding.
 - Invoice dates use Unix seconds at UTC midnight; new create/update timestamps use Unix milliseconds.
 - Quantities support up to three decimal places. Line totals round half a cent upward using integer thousandths; invoice totals sum rounded line totals.
-- The supported currencies are EUR, USD, KES, GBP, CHF, CAD and AUD, all with two decimal minor units. EUR is the default, configurable with `DEFAULT_CURRENCY`. No exchange rates or conversions are performed.
+- The supported currencies are EUR, USD, KES, GBP, CHF, CAD and AUD, all with two decimal minor units. EUR is the default, configurable with `DEFAULT_CURRENCY`. The live ledger does not combine currencies; monthly snapshots provide saved reference conversions.
 - Legacy invoices without priced lines are shown as **Needs pricing**, excluded from summaries, and remain editable.
-- This release records purchases and zero-priced items. Refunds, taxes as separate fields, receipt uploads, recurring expenses and currency conversion are outside its scope.
+- This release records purchases and zero-priced items. Refunds, taxes as separate fields, receipt uploads and recurring expenses are outside its scope.
 
 ## Verify
 
@@ -58,3 +58,26 @@ pnpm audit
 Jest and Testing Library cover all application JavaScript, with an enforced minimum of 85% statements, branches, functions and lines. Supertest uses in-memory SQLite for route-to-database integration. Separate unit tests mock filesystem and native database dependencies. Playwright uses a disposable in-memory database and a real production build, including desktop and mobile checks. It never connects to the supplied database. Browser screenshots under `artifacts/` contain synthetic test data.
 
 See `QA_TEST_PLAN.md` for regression scenarios, `backend/openapi.json` for the API contract, and `DEPLOYMENT.md` for production setup.
+
+## Monthly snapshots
+
+Open **Monthly summaries** to view an immutable picture of each completed month. The server checks every minute and captures the previous month after midnight in `MONTH_END_TIMEZONE` (default `Africa/Nairobi`). It saves a separate private snapshot for each user, including months with no expenses after tracking starts.
+
+Each snapshot stores:
+
+- Expense count, original totals by currency, and complete invoice/item details as they existed when captured.
+- The same combined monthly spending expressed in every supported currency: EUR, USD, KES, GBP, CHF, CAD and AUD. These are alternative values of the same total; do not add them together.
+- Historical exchange rates, their individual publication dates, the requested month-end date, capture/completion timestamps, and the provider URL.
+- An explicit warning when legacy expenses lack prices. Those expenses remain in the snapshot but are excluded from totals.
+
+Rates come from [Frankfurter v2](https://frankfurter.dev/), a free, no-key historical exchange-rate API. Only currency codes and dates are sent to it. The app requests month-end rates with EUR as the common base; for weekends/holidays it accepts earlier published rates up to ten days old and records those dates. Missing, future, invalid or older rates leave conversion pending rather than substituting current rates. Conversion uses exact decimal fractions and rounds the final total once per target currency to cents. Reference conversions are estimates, not the actual rate charged by your bank.
+
+The expense picture is saved **before** fetching exchange rates. If the service is unavailable, conversion retries each hour without recapturing expenses. Rates are cached by month, and completed snapshots cannot be overwritten. Editing or deleting a live expense, shop or item never changes a saved snapshot.
+
+The server must be running to capture at month-end. On restart it catches up from each user's earliest historical expense, or from the month tracking was enabled when there are no earlier expenses. It processes at most 24 missed months per user per pass and resumes on subsequent checks. Catch-up snapshots are labelled: they reflect the records available when the server returned, because changes made while it was offline cannot be reconstructed. Expenses added later to an already captured month do not alter its snapshot.
+
+### Create a summary now
+
+In **Monthly summaries**, click **Create summary**. Choose start/end dates (inclusive) and an optional title, then **Save summary**. The form defaults to this month through today. Future end dates are rejected. Any signed-in user can capture their own expenses without catalog-administration permission.
+
+Ad hoc summaries are labelled separately and appear immediately after saving. Each uses reference rates for the selected end date and preserves the exact captured expenses. You can save the same date range again to capture a later version; earlier snapshots remain unchanged. Creating one does not replace an automatic monthly snapshot or advance the monthly schedule. Failed rate requests leave the saved picture pending for automatic retries.

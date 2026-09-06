@@ -1,3 +1,5 @@
+const { readInvoices } = require("./ledger");
+const { createSnapshotService } = require("./snapshots");
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -20,6 +22,7 @@ function createApp(
     origin = "http://127.0.0.1:5173",
     production = false,
     defaultCurrency = "EUR",
+    snapshotOptions = {},
   } = {},
 ) {
   if (!secret) throw new Error("A session secret is required");
@@ -115,6 +118,19 @@ function createApp(
     next();
   });
   app.get("/api/me", (req, res) => res.json(publicUser(req.user)));
+  const snapshots = createSnapshotService(db, snapshotOptions);
+  app.post("/api/snapshots", async (req, res) => {
+    res.status(201).json(await snapshots.create(req.user.ID, req.body));
+  });
+  app.get("/api/snapshots", async (req, res) =>
+    res.json(await snapshots.list(req.user.ID)),
+  );
+  app.get("/api/snapshots/:id", async (req, res) => {
+    const id = parse(z.coerce.number().int().positive(), req.params.id);
+    const snapshot = await snapshots.get(req.user.ID, id);
+    if (!snapshot) throw fail(404, "Monthly snapshot not found");
+    res.json(snapshot);
+  });
   app.get("/api/catalog", async (_req, res) => {
     const [shops, items, categories, manufacturers] = await Promise.all([
       db.all(
@@ -166,70 +182,7 @@ function createApp(
     });
   app.get("/api/invoices", async (req, res) => {
     const filter = parse(filterSchema, req.query);
-    const clauses = ["v.user_id=?"];
-    const params = [req.user.ID];
-    if (filter.from) {
-      clauses.push("v.invoice_date>=?");
-      params.push(Date.parse(filter.from) / 1000);
-    }
-    if (filter.to) {
-      clauses.push("v.invoice_date<?");
-      params.push(Date.parse(filter.to) / 1000 + 86400);
-    }
-    if (filter.currency) {
-      clauses.push("v.invoice_currency=?");
-      params.push(filter.currency);
-    }
-    const invoices = await db.all(
-      `SELECT v.*,s.shop_name FROM Invoices v LEFT JOIN Shops s ON s.ID=v.shop_id WHERE ${clauses.join(" AND ")} ORDER BY v.invoice_date DESC,v.ID DESC`,
-      params,
-    );
-    const lines = await db.all(
-      "SELECT l.*,i.item_name,t.itemtype_name FROM ItemsInvoices l JOIN Invoices v ON v.ID=l.invoice_id LEFT JOIN Items i ON i.ID=l.item_id LEFT JOIN ItemTypes t ON t.ID=i.itemtype_id WHERE v.user_id=?",
-      [req.user.ID],
-    );
-    const results = invoices.map((v) => {
-      const entries = lines
-        .filter((l) => l.invoice_id === v.ID)
-        .map((l) => ({
-          itemId: l.item_id,
-          name: l.item_name || "Unknown item",
-          category: l.itemtype_name || "Uncategorized",
-          quantity: l.quantity ?? l.iteminvoice_nr ?? 1,
-          unitPriceCents: l.unit_price_cents,
-        }));
-      const unpriced =
-        entries.length === 0 || entries.some((l) => l.unitPriceCents === null);
-      return {
-        id: v.ID,
-        date: new Date(v.invoice_date * 1000).toISOString().slice(0, 10),
-        shopId: v.shop_id,
-        shop: v.shop_name || "Unknown shop",
-        currency: v.invoice_currency,
-        notes: v.invoice_notes,
-        lines: entries,
-        unpriced,
-        totalCents: unpriced
-          ? null
-          : entries.reduce(
-              (sum, l) =>
-                sum +
-                Math.round(
-                  (Math.round(l.quantity * 1000) * l.unitPriceCents) / 1000,
-                ),
-              0,
-            ),
-      };
-    });
-    const query = filter.search.toLowerCase();
-    res.json(
-      results.filter((v) =>
-        [v.shop, v.notes, ...v.lines.map((l) => l.name)]
-          .join(" ")
-          .toLowerCase()
-          .includes(query),
-      ),
-    );
+    res.json(await db.transaction(() => readInvoices(db, req.user.ID, filter)));
   });
   async function saveInvoice(req, res) {
     const data = parse(invoiceSchema, req.body);

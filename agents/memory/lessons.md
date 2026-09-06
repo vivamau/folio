@@ -15,3 +15,9 @@
 - Creator attribution must come from the authenticated backend user. Do not guess creators for legacy rows or accept IDs from the request body.
 
 - When a saved record appears missing, inspect persisted currency and active filters first. A default currency must not make a populated ledger appear empty on startup.
+
+- Month-end FX outages must not postpone freezing the expense records: capture first, convert the frozen data later, and persist retry/cursor state. Keep original currency totals and source dates so conversions are reproducible.
+- Clearly identify catch-up snapshots; the database cannot reconstruct edits made while the app was offline.
+
+- Ad hoc summary rates must be cached by the exact range end date, not just by month; otherwise partial-month and month-end captures can share incorrect rates.
+- Browser fixture API calls must await completed sign-in before using its session cookies.

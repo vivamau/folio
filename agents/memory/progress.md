@@ -26,3 +26,13 @@ Added 003_catalog_creators.sql: user_id foreign keys on Shops, ItemTypes, Items 
 ## Expense visibility fix
 
 Root cause: two existing KES expenses were excluded by the default EUR filter. Startup/login now choose a populated currency when the default is empty. Successful saves switch to the saved currency and clear search/date filters; saving from catalog opens Expenses. Existing expense records were not modified. TDD regressions reproduced EUR-vs-KES failures before implementation. Verified 40 tests, 3 browser workflows, lint and production build; coverage 98.09% statements, 93.71% branches. Regression includes save, Overview, Expenses and reload.
+
+## Monthly summaries complete
+
+Added Monthly summaries UI, private snapshot read APIs, immutable expense payloads, all-seven-currency conversions using free Frankfurter historical rates, saved rate dates/source, durable per-user month cursors, minute-based automatic scheduling, offline catch-up, and hourly conversion retries. Runs inside the application server. Default timezone Africa/Nairobi; first current-data snapshot due 1 October 2026 for September. Migration 004 applied and all three real-user cursors set to 2026-09; no live expenses were changed. Catch-up snapshots are labelled, not presented as exact reconstructions of downtime edits. README, deployment guide, OpenAPI and QA plan updated.
+
+Verification: 55 unit/integration tests passed; coverage statements 98.18%, branches 93.52%, functions 98.11%, lines 98.67%. Production build and lint passed. Final dependency audit reports zero vulnerabilities. Browser regression covers archived source deletion, all seven currencies, reload/mobile, and fully visible sign-out control after adding a navigation item.
+
+## Ad hoc summaries complete
+
+Create summary is available in Monthly summaries, with optional title and inclusive start/end dates defaulting to month-to-date. Results open immediately, preserve all seven currency conversions and remain independent from scheduled summaries. Existing snapshots/cursors and live expenses preserved by migration 005. Verified 61 tests, 5 browser workflows, lint and production build. Coverage: statements 98.42%, branches 93.52%, functions 98.23%, lines 98.75%. No dependencies added or changed.

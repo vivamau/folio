@@ -329,3 +329,12 @@
     }
   }
 }
+
+@media (max-height: 800px) and (min-width: 851px) {
+  .sidebar-note {
+    display: none;
+  }
+  .user-card {
+    margin-top: auto;
+  }
+}

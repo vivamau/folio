@@ -262,3 +262,20 @@ test("creator attribution follows another authorized account rather than a fixed
     ).toBe(login.body.id);
   }
 });
+
+test("shop deletion requires permission and no expenses from any user", async () => {
+  const shop = (await admin.post('/api/shops').send({name: 'Deletable shop'}).expect(201)).body;
+  await request(app).delete(`/api/shops/${shop.id}`).expect(401);
+  await reader.delete(`/api/shops/${shop.id}`).expect(403);
+  await admin.delete('/api/shops/invalid').expect(400);
+  await admin.delete('/api/shops/999999').expect(404);
+  const invoice = (await reader.post('/api/invoices').send({date:'2026-09-06', currency:'EUR', shopId:shop.id, lines:[{itemId:1,quantity:1,unitPriceCents:100}]}).expect(201)).body;
+  const blocked = await admin.delete(`/api/shops/${shop.id}`).expect(409);
+  expect(blocked.body.error).toMatch(/expenses/);
+  expect(await db.get('SELECT ID FROM Shops WHERE ID=?', [shop.id])).toBeDefined();
+  expect(await db.get('SELECT ID FROM Invoices WHERE ID=?', [invoice.id])).toBeDefined();
+  await reader.delete(`/api/invoices/${invoice.id}`).expect(204);
+  await admin.delete(`/api/shops/${shop.id}`).expect(204);
+  expect(await db.get('SELECT ID FROM Shops WHERE ID=?', [shop.id])).toBeUndefined();
+  await admin.delete(`/api/shops/${shop.id}`).expect(404);
+});

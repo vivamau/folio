@@ -35,10 +35,7 @@ async function readPassword(input = process.stdin, output = process.stdout) {
     input.on("data", read);
   });
 }
-async function reset({
-  username = "admin",
-  prompt = readPassword,
-} = {}) {
+async function reset({ username = "admin", prompt = readPassword } = {}) {
   if (fs.existsSync(".env")) process.loadEnvFile(".env");
   process.stdout.write(
     `New password for ${username} (minimum 12 characters): `,

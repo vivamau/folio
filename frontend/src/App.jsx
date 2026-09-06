@@ -11,6 +11,7 @@ import {
   Trash2,
   BookOpen,
   ChevronRight,
+  CalendarDays,
 } from "lucide-react";
 import { api } from "./api";
 import { currencies, money, initialCurrency } from "./format";
@@ -18,6 +19,7 @@ import Modal from "./Modal";
 import ExpenseForm from "./ExpenseForm";
 import Catalog, { CatalogForm, catalogKinds } from "./Catalog";
 import Dashboard from "./Dashboard";
+import Snapshots from "./Snapshots";
 const errorMessage = (error) =>
   error.response?.data?.error || "Unable to connect. Please try again.";
 export default function App() {
@@ -98,7 +100,7 @@ export default function App() {
         setSearch("");
         setFrom("");
         setTo("");
-        if (view === "catalog") setView("expenses");
+        if (view === "catalog" || view === "snapshots") setView("expenses");
       } else if (modal.type === "delete") {
         await api.delete(`/invoices/${modal.invoice.id}`);
       } else {
@@ -141,6 +143,11 @@ export default function App() {
       "Your expense ledger",
       "The details that make up your day to day.",
     ],
+    snapshots: [
+      "YOUR MONTH, PRESERVED",
+      "Monthly summaries",
+      "A lasting picture of your spending, in every supported currency.",
+    ],
     catalog: [
       "A LITTLE ORGANIZATION GOES A LONG WAY",
       "Your everyday essentials",
@@ -170,6 +177,7 @@ export default function App() {
             ["overview", "Overview", LayoutDashboard],
             ["expenses", "Expenses", Receipt],
             ["catalog", "Shops & items", Store],
+            ["snapshots", "Monthly summaries", CalendarDays],
           ].map(([key, label, Icon]) => (
             <button
               className={view === key ? "active" : ""}
@@ -212,11 +220,13 @@ export default function App() {
         <div className="topbar">
           <span>
             Workspace <ChevronRight size={13} />{" "}
-            {view === "catalog"
-              ? "Shops & items"
-              : view === "expenses"
-                ? "Expenses"
-                : "Overview"}
+            {view === "snapshots"
+              ? "Monthly summaries"
+              : view === "catalog"
+                ? "Shops & items"
+                : view === "expenses"
+                  ? "Expenses"
+                  : "Overview"}
           </span>
           <span className="private-label">
             <i />
@@ -254,7 +264,7 @@ export default function App() {
               </button>
             </div>
           )}
-          {view !== "catalog" && (
+          {(view === "overview" || view === "expenses") && (
             <div className="filter-bar">
               <div className="period-label">
                 Your ledger <span>/</span>{" "}
@@ -300,7 +310,9 @@ export default function App() {
           {view === "overview" && (
             <Dashboard invoices={filtered} currency={currency} />
           )}
-          {view === "catalog" ? (
+          {view === "snapshots" ? (
+            <Snapshots />
+          ) : view === "catalog" ? (
             <Catalog
               catalog={catalog}
               canManage={user.canManage}
@@ -456,7 +468,11 @@ export default function App() {
             <span>
               folio. <span>A little clarity, every day.</span>
             </span>
-            <span>Amounts shown in {currency}. No currency conversion.</span>
+            <span>
+              {view === "snapshots"
+                ? "Month-end conversions · Rates preserved with each summary"
+                : `Amounts shown in ${currency}. No currency conversion.`}
+            </span>
           </footer>
         </div>
       </main>
