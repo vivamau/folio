@@ -264,18 +264,85 @@ test("creator attribution follows another authorized account rather than a fixed
 });
 
 test("shop deletion requires permission and no expenses from any user", async () => {
-  const shop = (await admin.post('/api/shops').send({name: 'Deletable shop'}).expect(201)).body;
+  const shop = (
+    await admin.post("/api/shops").send({ name: "Deletable shop" }).expect(201)
+  ).body;
   await request(app).delete(`/api/shops/${shop.id}`).expect(401);
   await reader.delete(`/api/shops/${shop.id}`).expect(403);
-  await admin.delete('/api/shops/invalid').expect(400);
-  await admin.delete('/api/shops/999999').expect(404);
-  const invoice = (await reader.post('/api/invoices').send({date:'2026-09-06', currency:'EUR', shopId:shop.id, lines:[{itemId:1,quantity:1,unitPriceCents:100}]}).expect(201)).body;
+  await admin.delete("/api/shops/invalid").expect(400);
+  await admin.delete("/api/shops/999999").expect(404);
+  const invoice = (
+    await reader
+      .post("/api/invoices")
+      .send({
+        date: "2026-09-06",
+        currency: "EUR",
+        shopId: shop.id,
+        lines: [{ itemId: 1, quantity: 1, unitPrice: "1.00" }],
+      })
+      .expect(201)
+  ).body;
   const blocked = await admin.delete(`/api/shops/${shop.id}`).expect(409);
   expect(blocked.body.error).toMatch(/expenses/);
-  expect(await db.get('SELECT ID FROM Shops WHERE ID=?', [shop.id])).toBeDefined();
-  expect(await db.get('SELECT ID FROM Invoices WHERE ID=?', [invoice.id])).toBeDefined();
+  expect(
+    await db.get("SELECT ID FROM Shops WHERE ID=?", [shop.id]),
+  ).toBeDefined();
+  expect(
+    await db.get("SELECT ID FROM Invoices WHERE ID=?", [invoice.id]),
+  ).toBeDefined();
   await reader.delete(`/api/invoices/${invoice.id}`).expect(204);
   await admin.delete(`/api/shops/${shop.id}`).expect(204);
-  expect(await db.get('SELECT ID FROM Shops WHERE ID=?', [shop.id])).toBeUndefined();
+  expect(
+    await db.get("SELECT ID FROM Shops WHERE ID=?", [shop.id]),
+  ).toBeUndefined();
   await admin.delete(`/api/shops/${shop.id}`).expect(404);
+});
+
+test("CORS accepts local HTTP origins on any port and echoes credentialed preflights", async () => {
+  for (const origin of [
+    "http://localhost",
+    "http://localhost:5174",
+    "https://localhost:8443",
+    "http://127.0.0.1:3000",
+    "http://[::1]:5173",
+  ]) {
+    const preflight = await request(app)
+      .options("/api/invoices")
+      .set("Origin", origin)
+      .set("Access-Control-Request-Method", "POST")
+      .set("Access-Control-Request-Headers", "content-type")
+      .expect(204);
+    expect(preflight.headers["access-control-allow-origin"]).toBe(origin);
+    expect(preflight.headers["access-control-allow-credentials"]).toBe("true");
+    expect(preflight.headers.vary).toContain("Origin");
+    await admin.get("/api/me").set("Origin", origin).expect(200);
+  }
+  for (const origin of [
+    "null",
+    "https://localhost.evil.example",
+    "http://127.0.0.1.evil.example",
+    "http://localhost@evil.example",
+    "file://localhost",
+    "garbage",
+    "http://localhost:5173/path",
+  ]) {
+    await request(app)
+      .options("/api/invoices")
+      .set("Origin", origin)
+      .set("Access-Control-Request-Method", "POST")
+      .expect(403);
+  }
+  const deployed = createApp(db, {
+    secret: "production-cors-test",
+    production: true,
+    origin: "https://expenses.example",
+  });
+  for (const origin of ["https://expenses.example", "http://localhost:9000"]) {
+    const result = await request(deployed)
+      .options("/api/login")
+      .set("Origin", origin)
+      .set("Access-Control-Request-Method", "POST")
+      .expect(204);
+    expect(result.headers["access-control-allow-origin"]).toBe(origin);
+  }
 });

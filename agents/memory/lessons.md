@@ -21,3 +21,23 @@
 
 - Ad hoc summary rates must be cached by the exact range end date, not just by month; otherwise partial-month and month-end captures can share incorrect rates.
 - Browser fixture API calls must await completed sign-in before using its session cookies.
+
+- Expense creation fixtures must use the API’s decimal-string unitPrice field; unitPriceCents is a response field.
+
+- Currency formatting may already contain the currency code (KES); avoid duplicating it when adding explicit currency labels. Catalog totals must describe their own scope rather than inherit the ledger’s selected currency footer.
+
+- An invoice with an unpriced line can still contribute its priced lines to category totals. Count missing item prices separately to expose incomplete totals.
+
+- Snapshot deletion must scope by both owner and ad_hoc kind in the SQL mutation itself. Existing pending conversion updates affect only remaining rows, so no scheduler cancellation state is needed.
+
+- Parse date-only ledger values at UTC midnight and use UTC date arithmetic/formatting so browser timezone and daylight-saving changes do not move chart buckets.
+
+- Updating CORS alone is insufficient when a separate Origin guard runs first: both layers must share the same predicate.
+
+- Filter controls outside a form need explicit styling; inspect mobile screenshots for label/input collisions even when overflow tests pass.
+
+- Browser fixtures should create required shops rather than depend on earlier test execution.
+
+- Filter category lines before grouping purchases so mixed-category invoice totals and unrelated quantities cannot leak into trends.
+
+- For visual spacing, inspect inherited padding and line boxes as well as margins; text-button had 7px vertical padding despite a 2px margin.

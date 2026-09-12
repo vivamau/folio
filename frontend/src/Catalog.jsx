@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Plus, Store, Package, Tag, Factory } from "lucide-react";
+import { Plus, Store, Package, Tag, Factory, Trash2 } from "lucide-react";
+import ItemDashboard from "./ItemDashboard";
 export const catalogKinds = {
   shop: "shops",
   item: "items",
@@ -85,7 +86,51 @@ export function CatalogForm({ kind, catalog, onSave, saving }) {
     </form>
   );
 }
-export default function Catalog({ catalog, canManage, onAdd }) {
+export default function Catalog({
+  invoices = [],
+  catalog,
+  canManage,
+  onAdd,
+  onDeleteShop,
+}) {
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedShop, setSelectedShop] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedManufacturer, setSelectedManufacturer] = useState(null);
+  if (selectedManufacturer)
+    return (
+      <ItemDashboard
+        manufacturer={selectedManufacturer}
+        items={catalog.items}
+        invoices={invoices}
+        onBack={() => setSelectedManufacturer(null)}
+      />
+    );
+  if (selectedCategory)
+    return (
+      <ItemDashboard
+        category={selectedCategory}
+        items={catalog.items}
+        invoices={invoices}
+        onBack={() => setSelectedCategory(null)}
+      />
+    );
+  if (selectedShop)
+    return (
+      <ItemDashboard
+        shop={selectedShop}
+        invoices={invoices}
+        onBack={() => setSelectedShop(null)}
+      />
+    );
+  if (selectedItem)
+    return (
+      <ItemDashboard
+        item={selectedItem}
+        invoices={invoices}
+        onBack={() => setSelectedItem(null)}
+      />
+    );
   const icons = {
     shop: Store,
     item: Package,
@@ -112,12 +157,60 @@ export default function Catalog({ catalog, canManage, onAdd }) {
                 catalog[key].map((entry) => (
                   <div className="catalog-entry" key={entry.id}>
                     <span>
-                      {entry.name}
+                      <span>{entry.name}</span>
+                      {kind === "item" && (
+                        <button
+                          className="text-button item-trends-link"
+                          aria-label={`View trends for ${entry.name}`}
+                          onClick={() => setSelectedItem(entry)}
+                        >
+                          View trends
+                        </button>
+                      )}
+                      {kind === "shop" && (
+                        <button
+                          className="text-button item-trends-link"
+                          aria-label={`View shop trends for ${entry.name}`}
+                          onClick={() => setSelectedShop(entry)}
+                        >
+                          View trends
+                        </button>
+                      )}
+                      {kind === "category" && (
+                        <button
+                          className="text-button item-trends-link"
+                          aria-label={`View category trends for ${entry.name}`}
+                          onClick={() => setSelectedCategory(entry)}
+                        >
+                          View trends
+                        </button>
+                      )}
+                      {kind === "manufacturer" && (
+                        <button
+                          className="text-button item-trends-link"
+                          aria-label={`View manufacturer trends for ${entry.name}`}
+                          onClick={() => setSelectedManufacturer(entry)}
+                        >
+                          View trends
+                        </button>
+                      )}
                       {entry.address && <small>{entry.address}</small>}
                     </span>
-                    <span className="record-number">
-                      #{String(entry.id).padStart(3, "0")}
-                    </span>
+                    <div className="row-actions">
+                      <span className="record-number">
+                        #{String(entry.id).padStart(3, "0")}
+                      </span>
+                      {kind === "shop" && canManage && (
+                        <button
+                          className="icon-button"
+                          aria-label={`Delete shop ${entry.name}`}
+                          title="Delete shop"
+                          onClick={() => onDeleteShop(entry)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))
               ) : (

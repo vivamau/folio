@@ -28,3 +28,35 @@ Implemented immutable per-user monthly expense snapshots, historical Frankfurter
 ## Ad hoc summaries
 
 Added Create summary date-range dialog with an optional title and current-month-to-date defaults. POST /api/snapshots takes the user from authentication, rejects invalid/future ranges, freezes data and attempts exact reference-date currency conversion immediately. Pending conversions use the existing retry scheduler. Multiple ad hoc captures can coexist for the same range; none alter monthly uniqueness or cursors. Migration 005 preserves monthly IDs/payloads/FX totals, moves the rate cache to exact reference-date keys, and enforces immutable metadata. Running database migrated with both original expenses and all three monthly cursors preserved. Documentation and QA plan updated.
+
+- Shop deletion uses existing catalog-management permission. Any live invoice reference blocks deletion, regardless of invoice owner; frozen summary payloads remain independent. Check and deletion share a write transaction.
+
+- Shop totals represent the signed-in user’s all-time expenses, grouped by original currency. Shared catalog access does not grant access to other users’ spending. Unknown prices are flagged, not silently treated as complete zero totals.
+
+- Allocate category totals from purchased item lines using current catalog category IDs, not category names or whole invoice totals. Keep original currencies and personal all-time scope consistent with shops.
+
+- Interpret cancelling a saved ad hoc report as deleting that snapshot only. Automatic monthly summaries are excluded from the deletion endpoint; missing, foreign-owned and monthly IDs return 404. Pending FX conversion updates cannot recreate a deleted record.
+
+- Weekly buckets use Monday–Sunday, monthly uses calendar months, daily uses recorded expense dates. Show all populated periods rather than silently truncating history; retain the current expense filters and currency.
+
+- Per user request, accept any HTTP/HTTPS port on localhost/127.0.0.1/[::1] in every environment while retaining APP_ORIGIN. No wildcard origin response; unrelated hosts still denied.
+
+- Item dashboards use only the signed-in user’s live invoice lines. Currency selection applies to quantities as well as prices; weeks start Monday. Weighted averages exclude missing prices while quantities include all matching lines. Shops are identified by ID, not name.
+
+- Keep View trends as an accessible button beneath the name because it changes the current catalog view.
+
+- Omit parentheses when no manufacturer is assigned; do not alter persisted item names.
+
+- Shop trends chart total spending rather than a blended unit price across unrelated items. Weighted unit prices remain per-item in the breakdown; partially unpriced lines contribute quantities and are visibly flagged.
+
+- Category trends match catalog totals: only matching lines count, even in mixed-category invoices; currency/date filters remain personal. Empty unrelated invoices do not inflate expense counts.
+
+- Manufacturer trends use current item manufacturer IDs and personal invoice lines, matching category behavior. Unassigned items are excluded.
+
+- Remove totals only from catalog shop/category entries; all trend dashboards retain analytics.
+
+- Use the same 2px name-to-link spacing for shops, items, categories and manufacturers.
+
+- Override only catalog trends padding, retaining the 2px name/link margin and other button styles.
+
+- Expose existing month/week/day choices directly instead of hiding them in a dropdown. Monthly remains the default.

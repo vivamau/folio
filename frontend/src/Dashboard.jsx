@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ArrowUpRight,
   Receipt,
@@ -6,8 +6,11 @@ import {
   Wallet,
   ChartNoAxesColumnIncreasing,
 } from "lucide-react";
-import { money, summarize } from "./format";
+import { money, summarize, spendingPeriods } from "./format";
 export default function Dashboard({ invoices, currency }) {
+  const [interval, setInterval] = useState("monthly");
+  const intervalName = interval[0].toUpperCase() + interval.slice(1);
+  const periods = spendingPeriods(invoices, currency, interval);
   const stats = summarize(invoices, currency);
   const cards = [
     [
@@ -35,7 +38,7 @@ export default function Dashboard({ invoices, currency }) {
       "Places in your ledger",
     ],
   ];
-  const max = Math.max(...stats.months.map((m) => m[1]), 1);
+  const max = Math.max(...periods.map((m) => m[1]), 1);
   return (
     <>
       <div className="stats-grid">
@@ -60,11 +63,26 @@ export default function Dashboard({ invoices, currency }) {
               <span className="eyebrow">THE BIG PICTURE</span>
               <h2>Spending over time</h2>
             </div>
-            <span className="subtle-pill">{currency} · Monthly</span>
+            <label className="trend-control">
+              <span>{currency}</span>
+              <select
+                aria-label="Spending interval"
+                value={interval}
+                onChange={(event) => setInterval(event.target.value)}
+              >
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="daily">Daily</option>
+              </select>
+            </label>
           </div>
-          {stats.months.length ? (
-            <div className="bar-chart" role="img" aria-label="Monthly spending">
-              {stats.months.map(([month, value]) => (
+          {periods.length ? (
+            <div
+              className="bar-chart"
+              role="img"
+              aria-label={`${intervalName} spending`}
+            >
+              {periods.map(([month, value]) => (
                 <div className="bar-column" key={month}>
                   <span>{money(value, currency)}</span>
                   <div className="bar-track">
@@ -74,10 +92,16 @@ export default function Dashboard({ invoices, currency }) {
                     />
                   </div>
                   <small>
-                    {new Date(`${month}-02`).toLocaleDateString("en-GB", {
-                      month: "short",
-                      year: "2-digit",
-                    })}
+                    {interval === "weekly" && "Week of "}
+                    {new Date(`${month}T00:00:00Z`).toLocaleDateString(
+                      "en-GB",
+                      {
+                        timeZone: "UTC",
+                        ...(interval !== "monthly" && { day: "2-digit" }),
+                        month: "short",
+                        year: "2-digit",
+                      },
+                    )}
                   </small>
                 </div>
               ))}
@@ -93,7 +117,7 @@ export default function Dashboard({ invoices, currency }) {
                 <i />
               </div>
               <p>Your spending story starts here.</p>
-              <small>Add your first expense to see monthly trends.</small>
+              <small>Add your first expense to see {interval} trends.</small>
             </div>
           )}
         </section>

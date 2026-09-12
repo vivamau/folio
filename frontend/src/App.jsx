@@ -101,6 +101,8 @@ export default function App() {
         setFrom("");
         setTo("");
         if (view === "catalog" || view === "snapshots") setView("expenses");
+      } else if (modal.type === "delete-shop") {
+        await api.delete(`/shops/${modal.shop.id}`);
       } else if (modal.type === "delete") {
         await api.delete(`/invoices/${modal.invoice.id}`);
       } else {
@@ -314,8 +316,13 @@ export default function App() {
             <Snapshots />
           ) : view === "catalog" ? (
             <Catalog
+              invoices={invoices}
               catalog={catalog}
               canManage={user.canManage}
+              onDeleteShop={(shop) => {
+                setError("");
+                setModal({ type: "delete-shop", shop });
+              }}
               onAdd={(type) => {
                 setError("");
                 setModal({ type });
@@ -470,8 +477,10 @@ export default function App() {
             </span>
             <span>
               {view === "snapshots"
-                ? "Month-end conversions · Rates preserved with each summary"
-                : `Amounts shown in ${currency}. No currency conversion.`}
+                ? "Exchange rates preserved with each summary"
+                : view === "catalog"
+                  ? "Your all-time spending by currency. No currency conversion."
+                  : `Amounts shown in ${currency}. No currency conversion.`}
             </span>
           </footer>
         </div>
@@ -485,7 +494,9 @@ export default function App() {
                 : "New expense"
               : modal.type === "delete"
                 ? "Delete this expense?"
-                : `Add ${modal.type}`
+                : modal.type === "delete-shop"
+                  ? "Delete this shop?"
+                  : `Add ${modal.type}`
           }
           onClose={close}
         >
@@ -502,15 +513,16 @@ export default function App() {
               onSave={save}
               saving={saving}
             />
-          ) : modal.type === "delete" ? (
+          ) : ["delete", "delete-shop"].includes(modal.type) ? (
             <>
               <p>
-                This will permanently remove the expense from{" "}
-                {modal.invoice.shop} and its items.
+                {modal.type === "delete-shop"
+                  ? `Permanently remove ${modal.shop.name}? Shops can only be deleted when no expenses are related to them.`
+                  : `This will permanently remove the expense from ${modal.invoice.shop} and its items.`}
               </p>
               <footer className="form-footer">
                 <button className="button secondary" onClick={close}>
-                  Keep expense
+                  {modal.type === "delete-shop" ? "Keep shop" : "Keep expense"}
                 </button>
                 <button
                   className="button danger"

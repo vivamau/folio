@@ -99,3 +99,56 @@ test("creates a current-period ad hoc summary immediately and retains it after r
     page.getByRole("heading", { name: "September so far" }),
   ).toBeVisible();
 });
+
+test("deletes an ad hoc summary while preserving monthly summaries and expenses", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Username").fill("archive-reader");
+  await page.getByLabel("Password").fill("E2e-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByText("Spending overview")).toBeVisible();
+  const before = await (await page.request.get("/api/invoices")).json();
+  const created = await page.request.post("/api/snapshots", {
+    data: { title: "Temporary report", from: "2026-09-01", to: "2026-09-06" },
+  });
+  expect(created.status()).toBe(201);
+  await page
+    .getByRole("button", { name: "Monthly summaries", exact: true })
+    .click();
+  await page.getByRole("button", { name: /Temporary report/ }).click();
+  await page
+    .getByRole("button", { name: "Delete summary", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Keep summary", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Temporary report" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Delete summary", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Delete permanently", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /Temporary report/ }),
+  ).toHaveCount(0);
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Monthly summaries", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: /Temporary report/ }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: /August 2026/ }).click();
+  await expect(
+    page.getByRole("heading", { name: "August 2026" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Delete summary", exact: true }),
+  ).toHaveCount(0);
+  expect(await (await page.request.get("/api/invoices")).json()).toEqual(
+    before,
+  );
+});

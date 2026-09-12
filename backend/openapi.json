@@ -25,10 +25,7 @@
     "schemas": {
       "Credentials": {
         "type": "object",
-        "required": [
-          "username",
-          "password"
-        ],
+        "required": ["username", "password"],
         "properties": {
           "username": {
             "type": "string"
@@ -41,9 +38,7 @@
       },
       "CatalogEntry": {
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "properties": {
           "name": {
             "type": "string",
@@ -68,12 +63,7 @@
       },
       "InvoiceInput": {
         "type": "object",
-        "required": [
-          "date",
-          "shopId",
-          "currency",
-          "lines"
-        ],
+        "required": ["date", "shopId", "currency", "lines"],
         "properties": {
           "date": {
             "type": "string",
@@ -85,15 +75,7 @@
           },
           "currency": {
             "type": "string",
-            "enum": [
-              "EUR",
-              "USD",
-              "KES",
-              "GBP",
-              "CHF",
-              "CAD",
-              "AUD"
-            ]
+            "enum": ["EUR", "USD", "KES", "GBP", "CHF", "CAD", "AUD"]
           },
           "notes": {
             "type": "string",
@@ -105,11 +87,7 @@
             "maxItems": 100,
             "items": {
               "type": "object",
-              "required": [
-                "itemId",
-                "quantity",
-                "unitPrice"
-              ],
+              "required": ["itemId", "quantity", "unitPrice"],
               "properties": {
                 "itemId": {
                   "type": "integer",
@@ -199,10 +177,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "pending",
-              "ready"
-            ]
+            "enum": ["pending", "ready"]
           },
           "capturedAt": {
             "type": "string",
@@ -261,10 +236,7 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "monthly",
-              "ad_hoc"
-            ]
+            "enum": ["monthly", "ad_hoc"]
           },
           "title": {
             "type": "string"
@@ -712,10 +684,7 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "from",
-                  "to"
-                ],
+                "required": ["from", "to"],
                 "properties": {
                   "title": {
                     "type": "string",
@@ -787,6 +756,70 @@
           },
           "404": {
             "description": "Not found or belongs to another user"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete your ad hoc summary (automatic monthly summaries are protected)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Ad hoc summary deleted; expenses unchanged"
+          },
+          "400": {
+            "description": "Invalid ID"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "No owned ad hoc summary with this ID"
+          }
+        }
+      }
+    },
+    "/shops/{id}": {
+      "delete": {
+        "summary": "Delete a shop without related expenses (catalog managers only)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Shop deleted"
+          },
+          "400": {
+            "description": "Invalid shop ID"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Catalog management permission required"
+          },
+          "404": {
+            "description": "Shop not found"
+          },
+          "409": {
+            "description": "An expense belonging to any user references this shop"
           }
         }
       }

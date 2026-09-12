@@ -20,7 +20,7 @@ Copy `.env.example` to `.env`. Set:
 
 Restrict `.env` and database file access to the service account. The `backend/data` directory must exist and be writable. The database's parent directory must also be writable for SQLite journal files. Never expose either directory as public static content.
 
-Start with `pnpm start` under your service manager. Configure the proxy to forward the original Origin header. Production session cookies are HttpOnly, Secure, SameSite=Lax, Path=/, and expire in two hours. JWTs never appear in response bodies or browser storage. Login is rate-limited. Origin checks use a strict allowlist of one configured application origin. With no trusted-proxy configuration, rate limiting behind a reverse proxy uses its IP, so the 30-attempt / 15-minute limit is shared across clients.
+Start with `pnpm start` under your service manager. Configure the proxy to forward the original Origin header. Production session cookies are HttpOnly, Secure, SameSite=Lax, Path=/, and expire in two hours. JWTs never appear in response bodies or browser storage. Login is rate-limited. Origin checks allow the configured application origin plus HTTP/HTTPS origins on any port for localhost, 127.0.0.1 and [::1], including in production. Credentialed CORS responses echo the accepted origin rather than using a wildcard. With no trusted-proxy configuration, rate limiting behind a reverse proxy uses its IP, so the 30-attempt / 15-minute limit is shared across clients.
 
 ## Migration and backup
 

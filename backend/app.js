@@ -26,16 +26,34 @@ function createApp(
   } = {},
 ) {
   if (!secret) throw new Error("A session secret is required");
+  function allowedOrigin(value) {
+    if (!value || value === origin) return true;
+    try {
+      const url = new URL(value);
+      return (
+        url.origin === value &&
+        ["http:", "https:"].includes(url.protocol) &&
+        ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+      );
+    } catch {
+      return false;
+    }
+  }
   const app = express();
   app.disable("x-powered-by");
   app.use((req, res, next) => {
     res.set("X-Content-Type-Options", "nosniff");
     res.set("Referrer-Policy", "same-origin");
-    if (req.headers.origin && req.headers.origin !== origin)
+    if (!allowedOrigin(req.headers.origin))
       return res.status(403).json({ error: "Origin not allowed" });
     next();
   });
-  app.use(cors({ origin, credentials: true }));
+  app.use(
+    cors({
+      origin: (value, callback) => callback(null, allowedOrigin(value)),
+      credentials: true,
+    }),
+  );
   app.use(express.json({ limit: "128kb" }));
   app.use(cookieParser());
   const cookie = {
@@ -125,6 +143,17 @@ function createApp(
   app.get("/api/snapshots", async (req, res) =>
     res.json(await snapshots.list(req.user.ID)),
   );
+  app.delete("/api/snapshots/:id", async (req, res) => {
+    const id = parse(z.coerce.number().int().positive(), req.params.id);
+    const result = await db.transaction(() =>
+      db.run(
+        "DELETE FROM MonthlySnapshots WHERE ID=? AND user_id=? AND kind='ad_hoc'",
+        [id, req.user.ID],
+      ),
+    );
+    if (!result.changes) throw fail(404, "Ad hoc summary not found");
+    res.status(204).end();
+  });
   app.get("/api/snapshots/:id", async (req, res) => {
     const id = parse(z.coerce.number().int().positive(), req.params.id);
     const snapshot = await snapshots.get(req.user.ID, id);
@@ -180,6 +209,19 @@ function createApp(
       });
       res.status(201).json({ id: result.id, userId: req.user.ID });
     });
+  app.delete("/api/shops/:id", async (req, res) => {
+    if (!req.user.userrole_manageshops)
+      throw fail(403, "Catalog management requires administrator access");
+    const id = parse(z.coerce.number().int().positive(), req.params.id);
+    await db.transaction(async () => {
+      if (!(await db.get("SELECT ID FROM Shops WHERE ID=?", [id])))
+        throw fail(404, "Shop not found");
+      if (await db.get("SELECT ID FROM Invoices WHERE shop_id=? LIMIT 1", [id]))
+        throw fail(409, "Cannot delete a shop with related expenses.");
+      await db.run("DELETE FROM Shops WHERE ID=?", [id]);
+    });
+    res.status(204).end();
+  });
   app.get("/api/invoices", async (req, res) => {
     const filter = parse(filterSchema, req.query);
     res.json(await db.transaction(() => readInvoices(db, req.user.ID, filter)));

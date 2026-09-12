@@ -4,7 +4,7 @@ import "@testing-library/jest-dom";
 import Snapshots from "../frontend/src/Snapshots";
 import { api } from "../frontend/src/api";
 jest.mock("../frontend/src/api", () => ({
-  api: { get: jest.fn(), post: jest.fn() },
+  api: { get: jest.fn(), post: jest.fn(), delete: jest.fn() },
 }));
 const snapshot = {
   id: 1,
@@ -173,4 +173,39 @@ test("ad hoc dialog can be cancelled", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Create summary" }));
   fireEvent.click(screen.getByRole("button", { name: "Close dialog" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("ad hoc deletion supports cancellation, errors and successful removal", async () => {
+  const data = {
+    ...snapshot,
+    kind: "ad_hoc",
+    title: "Trip",
+    fromDate: "2026-08-01",
+    toDate: "2026-08-31",
+  };
+  api.get.mockImplementation((url) =>
+    Promise.resolve({ data: url === "/snapshots" ? [data] : data }),
+  );
+  render(<Snapshots />);
+  fireEvent.click(await screen.findByRole("button", { name: /Trip/ }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Delete summary" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Keep summary" }));
+  expect(api.delete).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Delete summary" }));
+  api.delete.mockRejectedValueOnce({
+    response: { data: { error: "Please retry" } },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Delete permanently" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("Please retry");
+  api.delete.mockResolvedValueOnce({});
+  fireEvent.click(screen.getByRole("button", { name: "Delete permanently" }));
+  expect(
+    await screen.findByText("Your first monthly picture is on its way"),
+  ).toBeVisible();
+  expect(api.delete).toHaveBeenLastCalledWith("/snapshots/1");
+  expect(
+    screen.queryByRole("heading", { name: "Trip" }),
+  ).not.toBeInTheDocument();
 });

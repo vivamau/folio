@@ -5,6 +5,7 @@ import {
   RefreshCw,
   LockKeyhole,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { api } from "./api";
 import { money, currencies, today } from "./format";
@@ -26,6 +27,31 @@ export default function Snapshots() {
   const [creating, setCreating] = useState(false),
     [saving, setSaving] = useState(false),
     [creationError, setCreationError] = useState("");
+  const [deleting, setDeleting] = useState(null),
+    [removing, setRemoving] = useState(false),
+    [deleteError, setDeleteError] = useState("");
+  const closeDeletion = useCallback(() => {
+    if (!removing) setDeleting(null);
+  }, [removing]);
+  async function remove() {
+    setRemoving(true);
+    setDeleteError("");
+    try {
+      await api.delete(`/snapshots/${deleting.id}`);
+      setSnapshots((current) =>
+        current.filter((snapshot) => snapshot.id !== deleting.id),
+      );
+      setSelected((current) => (current?.id === deleting.id ? null : current));
+      setDeleting(null);
+    } catch (error) {
+      setDeleteError(
+        error.response?.data?.error ||
+          "Unable to delete the summary. Please try again.",
+      );
+    } finally {
+      setRemoving(false);
+    }
+  }
   const closeCreation = useCallback(() => {
     if (!saving) setCreating(false);
   }, [saving]);
@@ -140,7 +166,13 @@ export default function Snapshots() {
           ))}
         </div>
         {selected ? (
-          <SnapshotDetail snapshot={selected} />
+          <SnapshotDetail
+            snapshot={selected}
+            onDelete={() => {
+              setDeleteError("");
+              setDeleting(selected);
+            }}
+          />
         ) : (
           snapshots.length > 0 &&
           !loading && (
@@ -152,6 +184,35 @@ export default function Snapshots() {
           )
         )}
       </div>
+      {deleting && (
+        <Modal title="Delete this ad hoc summary?" onClose={closeDeletion}>
+          <p>
+            Permanently delete {summaryName(deleting)}? Your expenses and
+            automatic monthly summaries will remain unchanged.
+          </p>
+          {deleteError && (
+            <p className="notice error" role="alert">
+              {deleteError}
+            </p>
+          )}
+          <footer className="form-footer">
+            <button
+              className="button secondary"
+              disabled={removing}
+              onClick={closeDeletion}
+            >
+              Keep summary
+            </button>
+            <button
+              className="button danger"
+              disabled={removing}
+              onClick={remove}
+            >
+              {removing ? "Deleting…" : "Delete permanently"}
+            </button>
+          </footer>
+        </Modal>
+      )}
       {creating && (
         <Modal title="Create summary" onClose={closeCreation}>
           <AdHocForm onSave={create} saving={saving} error={creationError} />
@@ -160,7 +221,7 @@ export default function Snapshots() {
     </section>
   );
 }
-function SnapshotDetail({ snapshot }) {
+function SnapshotDetail({ snapshot, onDelete }) {
   return (
     <article className="panel snapshot-detail">
       <header>
@@ -170,7 +231,14 @@ function SnapshotDetail({ snapshot }) {
           </span>
           <h2>{summaryName(snapshot)}</h2>
         </div>
-        <LockKeyhole size={20} />
+        {snapshot.kind === "ad_hoc" ? (
+          <button className="text-button" onClick={onDelete}>
+            <Trash2 size={16} />
+            Delete summary
+          </button>
+        ) : (
+          <LockKeyhole size={20} />
+        )}
       </header>
       <p className="snapshot-meta">
         Captured{" "}

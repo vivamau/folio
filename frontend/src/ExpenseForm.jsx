@@ -112,11 +112,18 @@ export default function ExpenseForm({
                 onChange={(e) => change(index, "itemId", e.target.value)}
               >
                 <option value="">Choose an item</option>
-                {catalog.items.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
+                {catalog.items.map((item) => {
+                  const manufacturer = catalog.manufacturers?.find(
+                    (entry) => entry.id === item.manufacturerId,
+                  );
+                  return (
+                    <option key={item.id} value={item.id}>
+                      {manufacturer
+                        ? `${item.name} (${manufacturer.name})`
+                        : item.name}
+                    </option>
+                  );
+                })}
               </select>
             </label>
             <label>

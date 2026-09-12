@@ -81,3 +81,19 @@ The server must be running to capture at month-end. On restart it catches up fro
 In **Monthly summaries**, click **Create summary**. Choose start/end dates (inclusive) and an optional title, then **Save summary**. The form defaults to this month through today. Future end dates are rejected. Any signed-in user can capture their own expenses without catalog-administration permission.
 
 Ad hoc summaries are labelled separately and appear immediately after saving. Each uses reference rates for the selected end date and preserves the exact captured expenses. You can save the same date range again to capture a later version; earlier snapshots remain unchanged. Creating one does not replace an automatic monthly snapshot or advance the monthly schedule. Failed rate requests leave the saved picture pending for automatic retries.
+
+Catalog managers can delete shops from **Shops & items** using the trash button. Deletion requires confirmation and is blocked if any user's expense references the shop. Saved expense summaries remain unchanged.
+
+To remove an ad hoc report, open it in **Monthly summaries**, choose **Delete summary**, and confirm. Only its owner can delete it. Automatic monthly summaries and the original expenses are preserved.
+
+**Spending over time** supports Monthly, Weekly and Daily views. Weekly periods run Monday–Sunday. The chart respects the active expense filters and currency, shows periods containing priced expenses, and scrolls horizontally for longer histories.
+
+Open **Shops & items → View trends** beside an item for its purchase dashboard. Choose Monthly, Weekly or Daily, a currency and optional dates to compare quantity-weighted unit prices, quantities purchased and shops used. The dashboard uses only your expenses; missing prices are flagged and currencies remain separate.
+
+Each shop also has **View trends** beneath its name. Its dashboard shows spending and quantities by month/week/day, expense and item counts, and a purchased-item breakdown with quantities and average unit prices. Currency/date filters apply to your own expenses only.
+
+Categories have **View trends** too, showing personal spending and quantities over time, expense/item counts and an item breakdown. Mixed-category purchases contribute only the lines belonging to that category.
+
+Manufacturers also offer **View trends**, with the same monthly/weekly/daily dashboard and filters, restricted to purchases of their assigned items.
+
+Trend dashboards display **Monthly**, **Weekly** and **Daily** buttons under **Chart view**. Select one to regroup both charts and the period breakdown while retaining the current date and currency filters.

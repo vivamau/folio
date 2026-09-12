@@ -42,3 +42,21 @@ export function initialCurrency(invoices, preferred = "EUR") {
     ? preferred
     : invoices[0]?.currency || preferred;
 }
+
+export function spendingPeriods(invoices, currency, interval) {
+  const totals = new Map();
+  for (const invoice of invoices) {
+    if (invoice.currency !== currency || invoice.totalCents === null) continue;
+    const key = periodKey(invoice.date, interval);
+    totals.set(key, (totals.get(key) || 0) + invoice.totalCents);
+  }
+  return [...totals].sort(([a], [b]) => a.localeCompare(b));
+}
+
+export function periodKey(value, interval) {
+  const date = new Date(`${value}T00:00:00Z`);
+  if (interval === "monthly") date.setUTCDate(1);
+  if (interval === "weekly")
+    date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+  return date.toISOString().slice(0, 10);
+}

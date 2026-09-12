@@ -355,3 +355,31 @@ test("ad hoc API validates dates, uses the signed-in user and supports current-m
   ).toBe(2);
   await user.get(`/api/snapshots/${result.body.id}`).expect(200);
 });
+
+test("only owners can delete ad hoc summaries without affecting expenses or monthly captures", async () => {
+  await admin.post("/api/invoices").send(invoice()).expect(201);
+  const saved = await service.create(1, {
+    from: "2026-08-01",
+    to: "2026-08-31",
+  });
+  const reader = request.agent(app);
+  await reader
+    .post("/api/login")
+    .send({ username: "reader1", password: "Test-password-123" });
+  await request(app).delete(`/api/snapshots/${saved.id}`).expect(401);
+  await reader.delete(`/api/snapshots/${saved.id}`).expect(404);
+  await admin.delete("/api/snapshots/bad").expect(400);
+  await admin.delete(`/api/snapshots/${saved.id}`).expect(204);
+  await admin.get(`/api/snapshots/${saved.id}`).expect(404);
+  await admin.delete(`/api/snapshots/${saved.id}`).expect(404);
+  expect((await admin.get("/api/invoices")).body).toHaveLength(1);
+  fetchRates.mockRejectedValue(new Error("offline"));
+  const pending = await service.create(1, {
+    from: "2026-08-01",
+    to: "2026-08-30",
+  });
+  expect(pending.status).toBe("pending");
+  await admin.delete(`/api/snapshots/${pending.id}`).expect(204);
+  await service.run();
+  expect(await service.get(1, pending.id)).toBeNull();
+});

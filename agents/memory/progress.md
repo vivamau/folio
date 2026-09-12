@@ -36,3 +36,67 @@ Verification: 55 unit/integration tests passed; coverage statements 98.18%, bran
 ## Ad hoc summaries complete
 
 Create summary is available in Monthly summaries, with optional title and inclusive start/end dates defaulting to month-to-date. Results open immediately, preserve all seven currency conversions and remain independent from scheduled summaries. Existing snapshots/cursors and live expenses preserved by migration 005. Verified 61 tests, 5 browser workflows, lint and production build. Coverage: statements 98.42%, branches 93.52%, functions 98.23%, lines 98.75%. No dependencies added or changed.
+
+## Shop deletion complete
+
+Catalog managers can confirm deletion from Shops & items. Backend checks all users’ live invoices within the delete transaction and returns 409 for referenced shops. Successful deletion refreshes the catalog. Verified 63 unit/integration tests, 6 browser workflows, lint and build; coverage 98.46% statements, 93.73% branches, 98.26% functions, 98.78% lines.
+
+## Shop spending totals complete
+
+Shops & items shows personal all-time totals below each shop name, separately by original currency. Empty shops and unpriced expenses have explicit labels; totals ignore ledger filters and refresh with invoice changes. Verified 65 tests, 7 browser workflows, lint and build. Coverage: statements 98.48%, branches 93.61%, functions 98.28%, lines 98.80%. Mobile screenshot: artifacts/shop-spending-mobile.png.
+
+## Category spending totals complete
+
+Category names now show personal all-time spending by currency, allocated from individual purchased item lines. Priced portions of incomplete expenses remain included; unpriced items are flagged. Reused shop display and lineTotal rounding. Verified 66 tests, 8 browser workflows, lint/build. Coverage: 98.50% statements, 93.78% branches, 98.29% functions, 98.81% lines.
+
+## Ad hoc summary deletion complete
+
+Owners can delete ready or rates-pending ad hoc reports from the detail view after confirmation. Atomic API deletion excludes automatic monthly snapshots and other owners. Expenses, monthly reports and cursors remain unchanged. Verified 68 tests, 9 browser workflows, lint/build and diff whitespace check. Global coverage: 98.55% statements, 93.43% branches, 98.34% functions, 98.85% lines.
+
+## Spending chart intervals complete
+
+Monthly/Weekly/Daily selector added to Spending over time. Weeks start Monday; grouping is timezone-stable and respects the filtered invoices/currency. All populated periods available with internal scrolling. Verified 70 tests, 10 browser workflows, lint/build; coverage 98.58% statements, 93.59% branches, 98.36% functions, 98.87% lines.
+
+## Localhost CORS complete — 2026-09-08
+
+Origin guard and CORS now accept HTTP/HTTPS localhost, 127.0.0.1 and [::1] on any port alongside APP_ORIGIN, including production. Credentialed responses echo accepted origins; malformed/lookalike origins remain blocked. Verified 71 tests, 10 browser workflows, lint/build/diff check; global coverage 98.59% statements, 93.64% branches, 98.38% functions, 98.88% lines.
+
+## Item dashboards complete — 2026-09-11
+
+Every item has View trends in Shops & items. Dashboard includes quantity-weighted unit price and quantity charts, shop breakdown and period/shop table, monthly/weekly/daily grouping, currency and inclusive date filters. Uses private invoice lines; missing prices flagged and quantities retained. Verified 74 tests, 11 browser workflows, lint/build/diff check; coverage 98.58% statements, 93.00% branches, 98.17% functions, 98.83% lines. Desktop/mobile screenshots in artifacts/item-dashboard-*.png.
+
+## Item trends link placement
+
+Moved View trends below each item name. Verified 74 tests, 11 browser workflows (including link position), lint and build.
+
+## Expense item manufacturer labels
+
+New/edit expense dropdowns show Item name (Manufacturer), with bare-name fallback. Verified 75 tests, 12 browser workflows, lint/build.
+
+## Shop trends complete
+
+View trends under each shop opens monthly/weekly/daily spending and quantity charts, expense/item counts, purchased-item breakdown and period table. Currency/date filters use private shop invoices. Verified 77 tests, 13 browser workflows, lint/build/diff checks; global coverage 98.52% statements, 93.23% branches, 97.86% functions, 98.76% lines. Mobile screenshot inspected.
+
+## Category trends complete
+
+Category View trends opens shared purchase dashboard with monthly/weekly/daily spending and quantity, date/currency filters, expense/item counts and per-item breakdown. Only matching category lines contribute, across shops. Verified 79 tests, 14 browser workflows, lint/build/diff checks. Coverage: 98.65% statements, 93.55% branches, 98.27% functions, 98.89% lines. Mobile screenshot inspected.
+
+## Manufacturer trends complete
+
+View trends beneath each manufacturer opens shared dashboard with spending/quantity, item breakdown, counts and monthly/weekly/daily plus date/currency controls. Only matching manufacturer items contribute. Verified 80 tests, 15 browser workflows, lint/build/diff checks. Coverage 98.66% statements, 93.66% branches, 98.29% functions, 98.90% lines. Mobile screenshot inspected.
+
+## Catalog totals removed
+
+Removed inline shop/category totals and spending subtitles from Shops & items. Trends and their totals remain available. Removed unused catalog aggregation/styles and replaced obsolete display assertions with absence checks. Verified 78 tests, 15 browser workflows, lint/build; coverage 98.62% statements, 93.50% branches, 98.26% functions, 98.88% lines.
+
+## Compact trends spacing
+
+Reduced shared View trends margin from 6px to 2px across all four catalog boxes. Verified 78 tests, 15 browser workflows, lint/build.
+
+## Trends padding corrected
+
+Removed inherited 7px vertical text-button padding from all catalog trend links, retaining 2px margin. Verified computed browser padding and mobile screenshot; 78 tests, 15 E2E workflows, lint/build passed.
+
+## Visible chart interval buttons
+
+Replaced trend View dropdown with explicit Monthly/Weekly/Daily pressed-state buttons across item, shop, category and manufacturer dashboards. Both charts and period table regroup while filters stay active. Verified 79 tests, 15 browser workflows, lint/build, mobile screenshot; coverage above 85% globally.

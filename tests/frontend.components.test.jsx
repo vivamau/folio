@@ -4,7 +4,7 @@ import "@testing-library/jest-dom";
 import Modal from "../frontend/src/Modal";
 import Dashboard from "../frontend/src/Dashboard";
 import ExpenseForm from "../frontend/src/ExpenseForm";
-import { CatalogForm } from "../frontend/src/Catalog";
+import Catalog, { CatalogForm } from "../frontend/src/Catalog";
 import { money, summarize, today } from "../frontend/src/format";
 import { api } from "../frontend/src/api";
 test("API is configured for cookie authentication", () => {
@@ -176,4 +176,79 @@ test("initial currency prefers a populated default and falls back to an existing
   expect(
     initialCurrency([{ currency: "KES" }, { currency: "EUR" }], "EUR"),
   ).toBe("EUR");
+});
+
+test("spending periods group by calendar month, Monday week and day across year boundaries", () => {
+  const { spendingPeriods } = require("../frontend/src/format");
+  const invoices = [
+    { date: "2025-12-31", currency: "EUR", totalCents: 100 },
+    { date: "2026-01-04", currency: "EUR", totalCents: 200 },
+    { date: "2026-01-05", currency: "EUR", totalCents: 300 },
+    { date: "2026-01-05", currency: "EUR", totalCents: 50 },
+    { date: "2026-01-05", currency: "KES", totalCents: 999 },
+    { date: "2026-01-06", currency: "EUR", totalCents: null },
+    { date: "2026-01-07", currency: "EUR", totalCents: 0 },
+  ];
+  expect(spendingPeriods(invoices, "EUR", "monthly")).toEqual([
+    ["2025-12-01", 100],
+    ["2026-01-01", 550],
+  ]);
+  expect(spendingPeriods(invoices, "EUR", "weekly")).toEqual([
+    ["2025-12-29", 300],
+    ["2026-01-05", 350],
+  ]);
+  expect(spendingPeriods(invoices, "EUR", "daily")).toEqual([
+    ["2025-12-31", 100],
+    ["2026-01-04", 200],
+    ["2026-01-05", 350],
+    ["2026-01-07", 0],
+  ]);
+});
+
+test("spending chart switches granularity without changing summary cards", () => {
+  const invoices = ["2026-09-06", "2026-09-07"].map((date) => ({
+    date,
+    currency: "EUR",
+    totalCents: 100,
+    shopId: 1,
+    lines: [],
+  }));
+  render(<Dashboard invoices={invoices} currency="EUR" />);
+  expect(screen.getByRole("img", { name: "Monthly spending" })).toBeVisible();
+  fireEvent.change(screen.getByLabelText("Spending interval"), {
+    target: { value: "weekly" },
+  });
+  expect(screen.getByRole("img", { name: "Weekly spending" })).toBeVisible();
+  expect(screen.getByText("Week of 31 Aug 26")).toBeVisible();
+  fireEvent.change(screen.getByLabelText("Spending interval"), {
+    target: { value: "daily" },
+  });
+  expect(screen.getByRole("img", { name: "Daily spending" })).toBeVisible();
+  expect(screen.getByText("06 Sept 26")).toBeVisible();
+  expect(screen.getByText("€2.00")).toBeVisible();
+});
+
+test("expense item options show manufacturers while retaining item IDs", () => {
+  render(
+    <ExpenseForm
+      catalog={{
+        shops: [{ id: 1, name: "Market" }],
+        manufacturers: [{ id: 5, name: "Dairy Co" }],
+        items: [
+          { id: 1, name: "Milk", manufacturerId: 5 },
+          { id: 2, name: "Milk", manufacturerId: null },
+        ],
+      }}
+      currency="EUR"
+      onSave={jest.fn()}
+    />,
+  );
+  expect(screen.getByRole("option", { name: "Milk (Dairy Co)" })).toHaveValue(
+    "1",
+  );
+  expect(screen.getByRole("option", { name: "Milk", exact: true })).toHaveValue(
+    "2",
+  );
+  fireEvent.change(screen.getByLabelText("Item 1"), { target: { value: "1" } });
+  expect(screen.getByLabelText("Item 1")).toHaveValue("1");
 });
