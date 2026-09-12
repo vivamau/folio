@@ -80,3 +80,9 @@ Generalized catalog invoice-line filtering to accept categoryId or manufacturerI
 - item-trends-link now explicitly overrides padding to zero. Shared button styles elsewhere are preserved.
 
 - Shared trend dashboard now uses an accessible Chart view button group; existing interval grouping reused. Updated interaction tests and QA/README.
+
+- Modal backdrop click handler checks target equals currentTarget before invoking onClose; tests cover interior clicks, outside dismissal, no save and restored focus.
+
+- Manufacturer POST compares normalized existing names inside BEGIN IMMEDIATE transaction. UI uses existing error handling and retains entered text. Added concurrency, legacy NULL and browser correction regressions; docs updated.
+
+- Added PATCH /items/:id/category and ItemCategoryForm with current selection, clear option and existing error handling. App reloads catalog/invoices after success. QA, README and OpenAPI updated.

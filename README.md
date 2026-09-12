@@ -97,3 +97,7 @@ Categories have **View trends** too, showing personal spending and quantities ov
 Manufacturers also offer **View trends**, with the same monthly/weekly/daily dashboard and filters, restricted to purchases of their assigned items.
 
 Trend dashboards display **Monthly**, **Weekly** and **Daily** buttons under **Chart view**. Select one to regroup both charts and the period breakdown while retaining the current date and currency filters.
+
+Manufacturer creation rejects existing names regardless of capitalization or surrounding whitespace. The form shows an error and keeps the entered name for correction.
+
+Catalog managers can select **Change category** beside an item to reassign it or choose **Uncategorized**. Existing expenses and live category trends follow the new assignment; saved summaries retain their captured categories.

@@ -38,7 +38,12 @@ export default function Modal({ title, onClose, children }) {
     };
   }, [onClose]);
   return (
-    <div className="modal-backdrop">
+    <div
+      className="modal-backdrop"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <section
         ref={ref}
         className="modal"

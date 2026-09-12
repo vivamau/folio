@@ -252,3 +252,17 @@ test("expense item options show manufacturers while retaining item IDs", () => {
   fireEvent.change(screen.getByLabelText("Item 1"), { target: { value: "1" } });
   expect(screen.getByLabelText("Item 1")).toHaveValue("1");
 });
+
+test("modal closes on backdrop click only", () => {
+  const close = jest.fn();
+  const { container } = render(
+    <Modal title="Example" onClose={close}>
+      <input aria-label="Inside" />
+    </Modal>,
+  );
+  fireEvent.click(screen.getByLabelText("Inside"));
+  fireEvent.click(screen.getByRole("dialog"));
+  expect(close).not.toHaveBeenCalled();
+  fireEvent.click(container.querySelector(".modal-backdrop"));
+  expect(close).toHaveBeenCalledTimes(1);
+});

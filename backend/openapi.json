@@ -475,6 +475,9 @@
           },
           "500": {
             "description": "Internal error"
+          },
+          "409": {
+            "description": "A manufacturer with the same normalized name already exists"
           }
         },
         "requestBody": {
@@ -820,6 +823,57 @@
           },
           "409": {
             "description": "An expense belonging to any user references this shop"
+          }
+        }
+      }
+    },
+    "/items/{id}/category": {
+      "patch": {
+        "summary": "Change or clear item category (catalog managers)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["categoryId"],
+                "properties": {
+                  "categoryId": {
+                    "type": "integer",
+                    "nullable": true,
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Category updated"
+          },
+          "400": {
+            "description": "Invalid ID or category"
+          },
+          "401": {
+            "description": "Sign in required"
+          },
+          "403": {
+            "description": "Catalog management permission required"
+          },
+          "404": {
+            "description": "Item not found"
           }
         }
       }

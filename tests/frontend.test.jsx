@@ -340,3 +340,26 @@ test("shop deletion confirms, handles linked expenses and refreshes the catalog"
     ).not.toBeInTheDocument(),
   );
 });
+
+test("item category can be changed from catalog with its current value preselected", async () => {
+  api.patch = jest.fn().mockResolvedValue({});
+  render(<App />);
+  await screen.findByText("Spending overview");
+  fireEvent.click(screen.getByRole("button", { name: "Shops & items" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Change category for Milk" }),
+  );
+  expect(screen.getByLabelText("Category")).toHaveValue("1");
+  fireEvent.change(screen.getByLabelText("Category"), {
+    target: { value: "" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() =>
+    expect(api.patch).toHaveBeenCalledWith("/items/1/category", {
+      categoryId: null,
+    }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
+});

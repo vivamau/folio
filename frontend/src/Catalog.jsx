@@ -92,6 +92,7 @@ export default function Catalog({
   canManage,
   onAdd,
   onDeleteShop,
+  onChangeCategory,
 }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedShop, setSelectedShop] = useState(null);
@@ -159,13 +160,27 @@ export default function Catalog({
                     <span>
                       <span>{entry.name}</span>
                       {kind === "item" && (
-                        <button
-                          className="text-button item-trends-link"
-                          aria-label={`View trends for ${entry.name}`}
-                          onClick={() => setSelectedItem(entry)}
-                        >
-                          View trends
-                        </button>
+                        <span className="item-action-links">
+                          <button
+                            className="text-button item-trends-link"
+                            aria-label={`View trends for ${entry.name}`}
+                            onClick={() => setSelectedItem(entry)}
+                          >
+                            View trends
+                          </button>
+                          {canManage && (
+                            <>
+                              <span aria-hidden="true">|</span>
+                              <button
+                                className="text-button item-trends-link"
+                                aria-label={`Change category for ${entry.name}`}
+                                onClick={() => onChangeCategory(entry)}
+                              >
+                                Change category
+                              </button>
+                            </>
+                          )}
+                        </span>
                       )}
                       {kind === "shop" && (
                         <button
@@ -229,5 +244,42 @@ export default function Catalog({
         );
       })}
     </div>
+  );
+}
+
+export function ItemCategoryForm({ item, catalog, onSave, saving }) {
+  const [categoryId, setCategoryId] = useState(item.categoryId ?? "");
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSave({ categoryId: categoryId === "" ? null : Number(categoryId) });
+      }}
+    >
+      <p>
+        Change the category for {item.name}. Existing expenses and live trends
+        use the new category; saved summaries stay unchanged.
+      </p>
+      <label>
+        Category
+        <select
+          aria-label="Category"
+          value={categoryId}
+          onChange={(event) => setCategoryId(event.target.value)}
+        >
+          <option value="">Uncategorized</option>
+          {catalog.categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <footer className="form-footer">
+        <button className="button primary" disabled={saving}>
+          {saving ? "Saving…" : "Save"}
+        </button>
+      </footer>
+    </form>
   );
 }

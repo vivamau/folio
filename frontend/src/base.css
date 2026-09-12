@@ -934,3 +934,13 @@ tr:last-child td {
   background: #214d47;
   color: white;
 }
+.item-action-links {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+  color: #8c998b;
+}
+.item-action-links .item-trends-link {
+  margin-top: 0;
+}

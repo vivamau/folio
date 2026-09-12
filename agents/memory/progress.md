@@ -100,3 +100,15 @@ Removed inherited 7px vertical text-button padding from all catalog trend links,
 ## Visible chart interval buttons
 
 Replaced trend View dropdown with explicit Monthly/Weekly/Daily pressed-state buttons across item, shop, category and manufacturer dashboards. Both charts and period table regroup while filters stay active. Verified 79 tests, 15 browser workflows, lint/build, mobile screenshot; coverage above 85% globally.
+
+## Modal backdrop dismissal
+
+Clicking outside dialogs now invokes their existing close action. Interior clicks do not dismiss; caller saving guards and focus restoration remain intact. Verified 80 tests, 16 browser workflows, lint/build.
+
+## Manufacturer duplicate prevention
+
+Creation rejects trimmed, case-insensitive, Unicode-normalized duplicates with 409 inside the insertion transaction. Existing records preserved, including nullable legacy names. Verified 82 tests, 17 browser workflows, lint/build; coverage 98.64% statements, 93.58% branches, 98.29% functions, 98.89% lines.
+
+## Item category reassignment
+
+Catalog managers can Change category beside an item, selecting an existing category or Uncategorized. Backend validates permission/item/category and updates only category and update date. Live expenses/trends reclassify; snapshots unchanged. Verified 84 tests, 18 browser workflows, lint/build; coverage 98.67% statements, 93.50% branches, 98.33% functions, 98.91% lines.

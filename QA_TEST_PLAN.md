@@ -105,3 +105,18 @@ Run `pnpm lint`, `pnpm test:coverage`, `pnpm build`, and `pnpm test:e2e`.
 ## Visible trend chart views
 - Item, shop, category and manufacturer dashboards show Monthly/Weekly/Daily buttons under Chart view. Monthly starts selected; selecting another updates both charts and period rows, and exposes aria-pressed correctly.
 - Currency and date filters remain active across interval changes. Verify keyboard access and mobile layout.
+
+## Modal outside click
+- Click the backdrop to dismiss an open modal without submitting; clicks on fields, content or empty space inside the dialog must not dismiss it.
+- Verify focus returns to the opener and scrolling is restored. Existing saving guards, Escape and X-button behavior remain intact.
+
+## Manufacturer duplicates
+- Create a manufacturer, then retry the same name, different capitalization and surrounding whitespace: API returns 409 and the form shows A manufacturer with this name already exists without closing.
+- Two simultaneous requests for equivalent names create exactly one record. Uniqueness applies to the shared catalog across creators.
+- Correct the rejected name and save successfully. Existing manufacturers/items remain unchanged.
+
+## Change item category
+- Catalog managers select Change category beside an item. Current category is preselected; save a new category or Uncategorized, then reload to verify persistence.
+- Existing expenses and category trends reflect the new assignment; saved snapshots retain their original labels. Name, manufacturer and creator remain unchanged.
+- Reject unauthorized callers, invalid IDs and nonexistent categories without changes. Form errors remain visible; cancellation makes no update.
+- Item actions appear inline as View trends | Change category beneath the name. The separator and category action appear only for catalog managers; both actions remain functional and compact on mobile.

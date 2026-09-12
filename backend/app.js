@@ -189,6 +189,20 @@ function createApp(
         throw fail(403, "Catalog management requires administrator access");
       const data = parse(catalogSchema, req.body);
       const result = await db.transaction(async () => {
+        if (route === "manufacturers") {
+          const normalize = (name) =>
+            (name ?? "").trim().normalize("NFKC").toLowerCase();
+          const existing = await db.all(
+            "SELECT manufacturer_name FROM Manufactures",
+          );
+          if (
+            existing.some(
+              (entry) =>
+                normalize(entry.manufacturer_name) === normalize(data.name),
+            )
+          )
+            throw fail(409, "A manufacturer with this name already exists.");
+        }
         if (route === "items")
           return db.run(
             "INSERT INTO Items (item_name,itemtype_id,manufacturer_id,item_create_date,user_id) VALUES (?,?,?,?,?)",
@@ -209,6 +223,29 @@ function createApp(
       });
       res.status(201).json({ id: result.id, userId: req.user.ID });
     });
+  app.patch("/api/items/:id/category", async (req, res) => {
+    if (!req.user.userrole_manageshops)
+      throw fail(403, "Catalog management requires administrator access");
+    const id = parse(z.coerce.number().int().positive(), req.params.id);
+    const { categoryId } = parse(
+      z.object({ categoryId: z.number().int().positive().nullable() }),
+      req.body,
+    );
+    await db.transaction(async () => {
+      if (!(await db.get("SELECT ID FROM Items WHERE ID=?", [id])))
+        throw fail(404, "Item not found");
+      if (
+        categoryId !== null &&
+        !(await db.get("SELECT ID FROM ItemTypes WHERE ID=?", [categoryId]))
+      )
+        throw fail(400, "Category not found");
+      await db.run(
+        "UPDATE Items SET itemtype_id=?,item_update_date=? WHERE ID=?",
+        [categoryId, Date.now(), id],
+      );
+    });
+    res.status(204).end();
+  });
   app.delete("/api/shops/:id", async (req, res) => {
     if (!req.user.userrole_manageshops)
       throw fail(403, "Catalog management requires administrator access");

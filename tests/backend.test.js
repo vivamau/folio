@@ -346,3 +346,95 @@ test("CORS accepts local HTTP origins on any port and echoes credentialed prefli
     expect(result.headers["access-control-allow-origin"]).toBe(origin);
   }
 });
+
+test("manufacturer insertion rejects normalized duplicates including concurrent requests", async () => {
+  await admin
+    .post("/api/manufacturers")
+    .send({ name: "Unique Dairy" })
+    .expect(201);
+  for (const name of ["Unique Dairy", "unique dairy", "  UNIQUE DAIRY  "]) {
+    const response = await admin
+      .post("/api/manufacturers")
+      .send({ name })
+      .expect(409);
+    expect(response.body.error).toBe(
+      "A manufacturer with this name already exists.",
+    );
+  }
+  const responses = await Promise.all(
+    ["Concurrent Maker", "concurrent maker"].map((name) =>
+      admin.post("/api/manufacturers").send({ name }),
+    ),
+  );
+  expect(responses.map((r) => r.status).sort()).toEqual([201, 409]);
+  expect(
+    (
+      await db.all(
+        "SELECT ID FROM Manufactures WHERE lower(manufacturer_name)='unique dairy'",
+      )
+    ).length,
+  ).toBe(1);
+  await admin
+    .post("/api/manufacturers")
+    .send({ name: "Unique Dairy Two" })
+    .expect(201);
+});
+
+test("manufacturer duplicate checks tolerate legacy unnamed rows", async () => {
+  await db.run("INSERT INTO Manufactures (manufacturer_name) VALUES (NULL)");
+  await admin
+    .post("/api/manufacturers")
+    .send({ name: "Legacy Compatible Maker" })
+    .expect(201);
+  await admin
+    .post("/api/manufacturers")
+    .send({ name: "legacy compatible maker" })
+    .expect(409);
+});
+
+test("catalog managers can change or clear item category without altering other fields", async () => {
+  const before = await db.get("SELECT * FROM Items WHERE ID=1");
+  const category = (
+    await admin
+      .post("/api/categories")
+      .send({ name: "Replacement category" })
+      .expect(201)
+  ).body;
+  await request(app)
+    .patch("/api/items/1/category")
+    .send({ categoryId: category.id })
+    .expect(401);
+  await reader
+    .patch("/api/items/1/category")
+    .send({ categoryId: category.id })
+    .expect(403);
+  await admin
+    .patch("/api/items/bad/category")
+    .send({ categoryId: null })
+    .expect(400);
+  await admin
+    .patch("/api/items/999999/category")
+    .send({ categoryId: null })
+    .expect(404);
+  await admin.patch("/api/items/1/category").send({}).expect(400);
+  await admin
+    .patch("/api/items/1/category")
+    .send({ categoryId: 999999 })
+    .expect(400);
+  await admin
+    .patch("/api/items/1/category")
+    .send({ categoryId: category.id, name: "Spoof", userId: 999 })
+    .expect(204);
+  const after = await db.get("SELECT * FROM Items WHERE ID=1");
+  expect(after.itemtype_id).toBe(category.id);
+  expect(after.item_name).toBe(before.item_name);
+  expect(after.manufacturer_id).toBe(before.manufacturer_id);
+  expect(after.user_id).toBe(before.user_id);
+  await admin
+    .patch("/api/items/1/category")
+    .send({ categoryId: null })
+    .expect(204);
+  expect(
+    (await db.get("SELECT itemtype_id FROM Items WHERE ID=1")).itemtype_id,
+  ).toBeNull();
+});

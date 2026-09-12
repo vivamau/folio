@@ -17,7 +17,11 @@ import { api } from "./api";
 import { currencies, money, initialCurrency } from "./format";
 import Modal from "./Modal";
 import ExpenseForm from "./ExpenseForm";
-import Catalog, { CatalogForm, catalogKinds } from "./Catalog";
+import Catalog, {
+  CatalogForm,
+  ItemCategoryForm,
+  catalogKinds,
+} from "./Catalog";
 import Dashboard from "./Dashboard";
 import Snapshots from "./Snapshots";
 const errorMessage = (error) =>
@@ -101,6 +105,8 @@ export default function App() {
         setFrom("");
         setTo("");
         if (view === "catalog" || view === "snapshots") setView("expenses");
+      } else if (modal.type === "item-category") {
+        await api.patch(`/items/${modal.item.id}/category`, data);
       } else if (modal.type === "delete-shop") {
         await api.delete(`/shops/${modal.shop.id}`);
       } else if (modal.type === "delete") {
@@ -319,6 +325,10 @@ export default function App() {
               invoices={invoices}
               catalog={catalog}
               canManage={user.canManage}
+              onChangeCategory={(item) => {
+                setError("");
+                setModal({ type: "item-category", item });
+              }}
               onDeleteShop={(shop) => {
                 setError("");
                 setModal({ type: "delete-shop", shop });
@@ -496,7 +506,9 @@ export default function App() {
                 ? "Delete this expense?"
                 : modal.type === "delete-shop"
                   ? "Delete this shop?"
-                  : `Add ${modal.type}`
+                  : modal.type === "item-category"
+                    ? "Change item category"
+                    : `Add ${modal.type}`
           }
           onClose={close}
         >
@@ -505,7 +517,14 @@ export default function App() {
               {error}
             </p>
           )}
-          {modal.type === "expense" ? (
+          {modal.type === "item-category" ? (
+            <ItemCategoryForm
+              item={modal.item}
+              catalog={catalog}
+              onSave={save}
+              saving={saving}
+            />
+          ) : modal.type === "expense" ? (
             <ExpenseForm
               invoice={modal.invoice}
               catalog={catalog}

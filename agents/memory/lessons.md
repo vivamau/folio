@@ -41,3 +41,5 @@
 - Filter category lines before grouping purchases so mixed-category invoice totals and unrelated quantities cannot leak into trends.
 
 - For visual spacing, inspect inherited padding and line boxes as well as margins; text-button had 7px vertical padding despite a 2px margin.
+
+- Original manufacturer names are nullable: handle legacy NULL values when normalizing duplicate comparisons.

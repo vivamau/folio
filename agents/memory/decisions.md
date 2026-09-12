@@ -60,3 +60,9 @@ Added Create summary date-range dialog with an optional title and current-month-
 - Override only catalog trends padding, retaining the 2px name/link margin and other button styles.
 
 - Expose existing month/week/day choices directly instead of hiding them in a dropdown. Monthly remains the default.
+
+- Reuse existing onClose so outside clicks follow the same per-modal rules as Escape and X.
+
+- Manufacturer uniqueness applies across the shared catalog. Preserve legacy duplicates and references rather than silently merge them; prevent new equivalents through the application insertion path.
+
+- Use existing catalog-manager authorization for category reassignment; preserve creator, item name and manufacturer. Explicit null clears category.

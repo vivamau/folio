@@ -397,6 +397,17 @@ test("item dashboard shows weighted prices, quantities and shops privately", asy
     .getByRole("button", { name: "View trends for Trend milk" })
     .boundingBox();
   expect(trendsLink.y).toBeGreaterThanOrEqual(itemName.y + itemName.height);
+  const categoryLink = await page
+    .getByRole("button", { name: "Change category for Trend milk" })
+    .boundingBox();
+  expect(Math.abs(categoryLink.y - trendsLink.y)).toBeLessThan(2);
+  expect(categoryLink.x).toBeGreaterThan(trendsLink.x + trendsLink.width);
+  await expect(
+    page
+      .getByRole("button", { name: "View trends for Trend milk" })
+      .locator(".."),
+  ).toContainText("|");
+
   for (const padding of await page
     .locator(".item-trends-link")
     .evaluateAll((links) =>
@@ -774,4 +785,127 @@ test("manufacturer trends isolate branded items and support intervals and privac
     .getByRole("button", { name: "View manufacturer trends for Trend maker" })
     .click();
   await expect(page.getByText("No purchases in this selection.")).toBeVisible();
+});
+
+test("modal backdrop dismisses without saving and restores focus", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Username").fill("admin");
+  await page.getByLabel("Password").fill("E2e-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  const add = page.getByRole("button", { name: "Add expense", exact: true });
+  await add.click();
+  await page.getByLabel("Notes").fill("Unsaved expense");
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.locator(".modal-backdrop").click({ position: { x: 5, y: 5 } });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(add).toBeFocused();
+  await add.click();
+  await expect(page.getByLabel("Notes")).toHaveValue("");
+});
+
+test("duplicate manufacturers show a clear error and preserve the entered name", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Username").fill("admin");
+  await page.getByLabel("Password").fill("E2e-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Shops & items", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Add manufacturer", exact: true })
+    .click();
+  await page.getByLabel("Name", { exact: true }).fill("Distinct Maker");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "Add manufacturer", exact: true })
+    .click();
+  await page.getByLabel("Name", { exact: true }).fill("  distinct maker  ");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "A manufacturer with this name already exists.",
+  );
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue(
+    "  distinct maker  ",
+  );
+  const catalog = await (await page.request.get("/api/catalog")).json();
+  expect(
+    catalog.manufacturers.filter(
+      (m) => m.name.toLowerCase() === "distinct maker",
+    ),
+  ).toHaveLength(1);
+  await page.getByLabel("Name", { exact: true }).fill("Another Distinct Maker");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("item category reassignment updates existing expenses and persists", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByLabel("Username").fill("admin");
+  await page.getByLabel("Password").fill("E2e-password-123");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByText("Spending overview")).toBeVisible();
+  const category = await (
+    await page.request.post("/api/categories", {
+      data: { name: "Changed category" },
+    })
+  ).json();
+  const item = await (
+    await page.request.post("/api/items", { data: { name: "Reclassify item" } })
+  ).json();
+  const shop = await (
+    await page.request.post("/api/shops", { data: { name: "Reclassify shop" } })
+  ).json();
+  expect(
+    (
+      await page.request.post("/api/invoices", {
+        data: {
+          date: "2026-09-01",
+          currency: "EUR",
+          shopId: shop.id,
+          lines: [{ itemId: item.id, quantity: 1, unitPrice: "2.00" }],
+        },
+      })
+    ).status(),
+  ).toBe(201);
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Shops & items", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Change category for Reclassify item" })
+    .click();
+  await expect(page.getByLabel("Category", { exact: true })).toHaveValue("");
+  await page
+    .getByLabel("Category", { exact: true })
+    .selectOption(String(category.id));
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const invoices = await (await page.request.get("/api/invoices")).json();
+  expect(
+    invoices.find((invoice) => invoice.shopId === shop.id).lines[0].category,
+  ).toBe("Changed category");
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Shops & items", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Change category for Reclassify item" })
+    .click();
+  await expect(page.getByLabel("Category", { exact: true })).toHaveValue(
+    String(category.id),
+  );
+  await page.getByLabel("Category", { exact: true }).selectOption("");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  const catalog = await (await page.request.get("/api/catalog")).json();
+  expect(
+    catalog.items.find((entry) => entry.id === item.id).categoryId,
+  ).toBeNull();
 });
