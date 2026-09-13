@@ -112,3 +112,7 @@ Creation rejects trimmed, case-insensitive, Unicode-normalized duplicates with 4
 ## Item category reassignment
 
 Catalog managers can Change category beside an item, selecting an existing category or Uncategorized. Backend validates permission/item/category and updates only category and update date. Live expenses/trends reclassify; snapshots unchanged. Verified 84 tests, 18 browser workflows, lint/build; coverage 98.67% statements, 93.50% branches, 98.33% functions, 98.91% lines.
+
+## Inline item actions complete
+
+View trends | Change category now appears on one line below each item name. Non-managers see only View trends. Verified 84 tests, 18 browser workflows including alignment, lint and build.

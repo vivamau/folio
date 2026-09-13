@@ -66,3 +66,5 @@ Added Create summary date-range dialog with an optional title and current-month-
 - Manufacturer uniqueness applies across the shared catalog. Preserve legacy duplicates and references rather than silently merge them; prevent new equivalents through the application insertion path.
 
 - Use existing catalog-manager authorization for category reassignment; preserve creator, item name and manufacturer. Explicit null clears category.
+
+- Display item actions inline while retaining catalog permissions and 2px name-to-actions spacing.

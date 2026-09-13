@@ -86,3 +86,5 @@ Generalized catalog invoice-line filtering to accept categoryId or manufacturerI
 - Manufacturer POST compares normalized existing names inside BEGIN IMMEDIATE transaction. UI uses existing error handling and retains entered text. Added concurrency, legacy NULL and browser correction regressions; docs updated.
 
 - Added PATCH /items/:id/category and ItemCategoryForm with current selection, clear option and existing error handling. App reloads catalog/invoices after success. QA, README and OpenAPI updated.
+
+- Moved Change category into the item-name action group, with an aria-hidden separator and shared compact styling.
