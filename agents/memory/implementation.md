@@ -88,3 +88,13 @@ Generalized catalog invoice-line filtering to accept categoryId or manufacturerI
 - Added PATCH /items/:id/category and ItemCategoryForm with current selection, clear option and existing error handling. App reloads catalog/invoices after success. QA, README and OpenAPI updated.
 
 - Moved Change category into the item-name action group, with an aria-hidden separator and shared compact styling.
+
+- Added frozen item/category/shop aggregation to snapshot detail responses and SummaryBreakdowns UI with grouping and currency selectors. Reuses exact report currency conversion and supports historical/pending reports.
+
+- ItemDashboard now displays manufacturer metadata and a separate manufacturer comparison panel; Catalog passes existing item/manufacturer lists. No backend or database changes.
+
+- Added SummaryBreakdowns CSV serialization and browser Blob download; export is independent of visible tab/currency and uses only loaded private saved report data. No dependencies or database changes.
+
+- Dashboard category controls filter category totals and percentage bars independently. overview-insights CSS stacks both panels at full width.
+
+- SummaryBreakdowns now renders keyboard-accessible column buttons with arrows and aria-sort; name, numeric quantity and selected-currency spending sorting use local state.

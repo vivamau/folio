@@ -944,3 +944,23 @@ tr:last-child td {
 .item-action-links .item-trends-link {
   margin-top: 0;
 }
+
+.manufacturer-comparison {
+  margin: 20px 0;
+}
+.manufacturer-comparison .panel-subtitle {
+  margin: 12px 0 18px;
+}
+
+.overview-insights {
+  grid-template-columns: minmax(0, 1fr);
+}
+.category-period-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.overview-insights .panel-heading {
+  flex-wrap: wrap;
+  gap: 16px;
+}

@@ -43,3 +43,13 @@
 - For visual spacing, inspect inherited padding and line boxes as well as margins; text-button had 7px vertical padding despite a 2px margin.
 
 - Original manufacturer names are nullable: handle legacy NULL values when normalizing duplicate comparisons.
+
+- Currency formatting may join three-letter codes directly to digits; normalize code spacing in report breakdowns for readability. Saved summary category names must come from frozen lines, not the current catalog.
+
+- Manufacturer comparisons should reuse itemHistory to preserve weighted price, unpriced quantity and date/currency semantics instead of separately aggregating invoice totals.
+
+- CSV exports need UTF-8 BOM for Excel names, quoted delimiters/newlines and formula escaping; keep all currency amounts numeric and independent of display selection.
+
+- Scope full-width overview layout to its container so shared insights grids on trend detail pages retain their layout.
+
+- Sort money numerically in one chosen currency; never compare mixed original-currency values as if they were equivalent. Copy snapshot arrays before sorting.

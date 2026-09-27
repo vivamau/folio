@@ -72,10 +72,71 @@ function snapshotPayload(invoices) {
     originalTotals,
   };
 }
+// Build from frozen invoices only, including for reports saved before breakdowns existed.
+function snapshotBreakdowns(invoices, rates) {
+  const groups = { items: new Map(), categories: new Map(), shops: new Map() };
+  function add(group, key, name, currency, cents, quantity) {
+    if (!group.has(key))
+      group.set(key, { name, quantity: 0, originalTotals: {} });
+    const entry = group.get(key);
+    entry.quantity += quantity;
+    entry.originalTotals[currency] =
+      (entry.originalTotals[currency] || 0) + cents;
+  }
+  for (const invoice of invoices) {
+    if (invoice.totalCents === null) continue;
+    add(
+      groups.shops,
+      invoice.shopId ?? invoice.shop,
+      invoice.shop,
+      invoice.currency,
+      invoice.totalCents,
+      invoice.lines.reduce((sum, line) => sum + line.quantity, 0),
+    );
+    for (const line of invoice.lines) {
+      const cents = Math.round(
+        (Math.round(line.quantity * 1000) * line.unitPriceCents) / 1000,
+      );
+      add(
+        groups.items,
+        line.itemId ?? line.name,
+        line.name,
+        invoice.currency,
+        cents,
+        line.quantity,
+      );
+      const category = line.category || "Uncategorized";
+      add(
+        groups.categories,
+        category,
+        category,
+        invoice.currency,
+        cents,
+        line.quantity,
+      );
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(groups).map(([key, group]) => [
+      key,
+      [...group.values()]
+        .map((entry) => ({
+          ...entry,
+          quantity: Math.round(entry.quantity * 1000) / 1000,
+          totals: rates
+            ? convertTotals(entry.originalTotals, rates.rates)
+            : null,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    ]),
+  );
+}
 function decode(row, details) {
   if (!row) return null;
   const payload = JSON.parse(row.payload_json);
-  if (!details) delete payload.invoices;
+  const rates = row.rates_json ? JSON.parse(row.rates_json) : null;
+  if (details) payload.breakdowns = snapshotBreakdowns(payload.invoices, rates);
+  else delete payload.invoices;
   return {
     id: row.ID,
     month: row.month,
@@ -91,7 +152,7 @@ function decode(row, details) {
     completedAt: row.completed_at,
     nextRetryAt: row.next_retry_at,
     ...payload,
-    rates: row.rates_json ? JSON.parse(row.rates_json) : null,
+    rates,
     totals: row.totals_json ? JSON.parse(row.totals_json) : null,
   };
 }

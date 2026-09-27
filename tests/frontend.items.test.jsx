@@ -344,3 +344,57 @@ test("trend intervals are visible buttons with selected state", () => {
     "false",
   );
 });
+
+test("item manufacturer comparison shows weighted price and quantity differences with shared filters", () => {
+  const items = [
+    { id: 1, name: "Coffee", manufacturerId: 1 },
+    { id: 2, name: " coffee ", manufacturerId: 2 },
+    { id: 3, name: "Tea", manufacturerId: 3 },
+  ];
+  render(
+    <ItemDashboard
+      item={items[0]}
+      items={items}
+      manufacturers={[
+        { id: 1, name: "Alpha" },
+        { id: 2, name: "Beta" },
+      ]}
+      invoices={invoices}
+      onBack={() => {}}
+    />,
+  );
+  expect(screen.getByText("Manufacturer: Alpha")).toBeVisible();
+  const box = screen.getByRole("region", { name: "Compare manufacturers" });
+  expect(box).toHaveTextContent("Beta");
+  expect(box).toHaveTextContent("€9.99");
+  expect(box).toHaveTextContent("+€7.99");
+  expect(box).toHaveTextContent("+95.5");
+  expect(box).not.toHaveTextContent("Tea");
+  fireEvent.change(screen.getByLabelText("Item start date"), {
+    target: { value: "2026-09-01" },
+  });
+  expect(box).toHaveTextContent("No purchases");
+  expect(box).not.toHaveTextContent("+€7.99");
+  fireEvent.change(screen.getByLabelText("Item currency"), {
+    target: { value: "KES" },
+  });
+  expect(box).toHaveTextContent("No purchases");
+});
+
+test("item details handle unspecified manufacturers and hide comparison for same manufacturer", () => {
+  render(
+    <ItemDashboard
+      item={{ id: 1, name: "Coffee" }}
+      items={[
+        { id: 1, name: "Coffee" },
+        { id: 2, name: "Coffee" },
+      ]}
+      invoices={[]}
+      onBack={() => {}}
+    />,
+  );
+  expect(screen.getByText("Manufacturer: Not specified")).toBeVisible();
+  expect(
+    screen.queryByRole("region", { name: "Compare manufacturers" }),
+  ).not.toBeInTheDocument();
+});

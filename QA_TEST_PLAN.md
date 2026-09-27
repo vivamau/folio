@@ -120,3 +120,28 @@ Run `pnpm lint`, `pnpm test:coverage`, `pnpm build`, and `pnpm test:e2e`.
 - Existing expenses and category trends reflect the new assignment; saved snapshots retain their original labels. Name, manufacturer and creator remain unchanged.
 - Reject unauthorized callers, invalid IDs and nonexistent categories without changes. Form errors remain visible; cancellation makes no update.
 - Item actions appear inline as View trends | Change category beneath the name. The separator and category action appear only for catalog managers; both actions remain functional and compact on mobile.
+
+## Saved report breakdowns
+- Open existing monthly and newly created ad hoc reports; switch By item / By category / By shop. Verify names, quantities and totals against frozen expenses.
+- Switch all seven currencies and original currencies; mixed source amounts remain separate in original mode.
+- Edit/delete live purchases and rename/reassign catalog entries: saved breakdowns must remain unchanged.
+- Verify pending conversions show original amounts and disabled currency control; empty/unpriced reports show clear empty states.
+- Verify mobile controls and tables fit, keyboard controls work, and another user cannot access the report.
+
+## Item manufacturer comparison
+- Open item trends and verify manufacturer name, including Not specified for missing metadata.
+- Create same-name items with distinct manufacturers; verify comparison box, weighted unit prices, quantities and signed differences from selected item.
+- Verify case/whitespace matching, unrelated names excluded, and no comparison for a single manufacturer.
+- Change currency/date range: both item history and comparison update. Missing prices show Unpriced/Not available, never a zero price. Purchases remain scoped to signed-in user.
+- Verify comparison table scrolls within its panel on mobile.
+
+## Summary CSV export
+- Open a generated monthly/ad hoc summary, switch tab/currency and export CSV. Verify all item/category/shop rows are included and all seven currency columns match saved rates.
+- Open in Excel or import as UTF-8 comma-separated data: verify numeric decimals, accents, commas, quotes and multiline names. Formula-like names must remain text.
+- Verify pending reports disable export and empty ready reports export column headers. Confirm later live catalog edits do not alter saved export names.
+
+## Overview category periods
+Verify Monthly/Weekly/Daily category intervals and specific period selection, All periods totals, correct category shares, Monday week boundaries, currency changes and independent spending interval. Confirm both overview panels span the same full width, category below time chart, on desktop and mobile.
+
+## Breakdown sorting
+Click name, quantity and spent headers in all three summary tabs; verify ascending/descending indicators and numeric ordering (2 before 10). Change currency and verify spent order follows it. Original-currency mode requires a single currency before spending sorting. Check keyboard activation, empty tables, immutable source rows and existing CSV export.

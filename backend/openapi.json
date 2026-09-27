@@ -167,6 +167,7 @@
       },
       "MonthlySnapshot": {
         "type": "object",
+        "description": "Detail responses include breakdowns.items, breakdowns.categories and breakdowns.shops arrays. Each row contains name, quantity, originalTotals (currency to integer cents) and totals (all supported currency conversions using saved rates, or null while pending). Computed only from frozen priced invoices; omitted from list responses.",
         "properties": {
           "id": {
             "type": "integer"

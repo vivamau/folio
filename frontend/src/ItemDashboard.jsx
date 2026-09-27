@@ -164,6 +164,7 @@ export default function ItemDashboard({
   category,
   manufacturer,
   items = [],
+  manufacturers = [],
   invoices,
   onBack,
 }) {
@@ -225,6 +226,13 @@ export default function ItemDashboard({
       <header className="item-heading">
         <span className="eyebrow">YOUR PURCHASE HISTORY</span>
         <h2>{entity.name}</h2>
+        {!grouped && (
+          <p>
+            Manufacturer:{" "}
+            {manufacturers.find((entry) => entry.id === item.manufacturerId)
+              ?.name || "Not specified"}
+          </p>
+        )}
         <p>
           {grouped
             ? "Follow your spending, quantities and purchased items."
@@ -289,6 +297,19 @@ export default function ItemDashboard({
           {history.unpriced} purchase lines need pricing. Their quantities are
           included; prices and spending exclude them.
         </p>
+      )}
+      {!grouped && (
+        <ManufacturerComparison
+          item={item}
+          items={items}
+          manufacturers={manufacturers}
+          invoices={invoices}
+          currency={currency}
+          interval={interval}
+          from={from}
+          to={to}
+          baseline={history}
+        />
       )}
       {!history.periods.length ? (
         <section className="panel chart-empty">
@@ -425,6 +446,108 @@ function Trend({ title, rows, field, interval, format }) {
             <small>{label(row.key, interval)}</small>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function ManufacturerComparison({
+  item,
+  items,
+  manufacturers,
+  invoices,
+  currency,
+  interval,
+  from,
+  to,
+  baseline,
+}) {
+  const normalized = (name) => name.normalize("NFKC").trim().toLowerCase();
+  const matches = items.filter(
+    (candidate) => normalized(candidate.name) === normalized(item.name),
+  );
+  if (
+    !matches.some(
+      (candidate) =>
+        (candidate.manufacturerId ?? null) !== (item.manufacturerId ?? null),
+    )
+  )
+    return null;
+  const signed = (value, format) =>
+    value > 0 ? "+" + format(value) : format(value);
+  return (
+    <section
+      className="panel manufacturer-comparison"
+      aria-label="Compare manufacturers"
+    >
+      <h3>Compare manufacturers</h3>
+      <p className="panel-subtitle">
+        Same item name · Selected currency and date range. Differences are
+        compared with this item. Prices are weighted by priced quantity;
+        quantities include unpriced purchases. Pack sizes are not adjusted.
+      </p>
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>MANUFACTURER</th>
+              <th>AVG. UNIT PRICE</th>
+              <th>PRICE DIFFERENCE</th>
+              <th>QUANTITY</th>
+              <th>QUANTITY DIFFERENCE</th>
+            </tr>
+          </thead>
+          <tbody>
+            {matches.map((candidate) => {
+              const history = itemHistory(
+                invoices,
+                candidate.id,
+                currency,
+                interval,
+                from,
+                to,
+              );
+              const current = candidate.id === item.id;
+              return (
+                <tr key={candidate.id}>
+                  <td>
+                    {manufacturers.find(
+                      (entry) => entry.id === candidate.manufacturerId,
+                    )?.name || "Not specified"}
+                    {current && " (this item)"}
+                  </td>
+                  <td>
+                    {!history.periods.length
+                      ? "No purchases"
+                      : history.average === null
+                        ? "Unpriced"
+                        : money(history.average, currency)}
+                  </td>
+                  <td>
+                    {current
+                      ? "—"
+                      : history.average === null || baseline.average === null
+                        ? "Not available"
+                        : signed(history.average - baseline.average, (value) =>
+                            money(value, currency),
+                          )}
+                  </td>
+                  <td>{quantity(history.quantity)}</td>
+                  <td>
+                    {current
+                      ? "—"
+                      : signed(
+                          Math.round(
+                            (history.quantity - baseline.quantity) * 1000,
+                          ) / 1000,
+                          quantity,
+                        )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </section>
   );

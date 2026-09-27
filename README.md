@@ -101,3 +101,14 @@ Trend dashboards display **Monthly**, **Weekly** and **Daily** buttons under **C
 Manufacturer creation rejects existing names regardless of capitalization or surrounding whitespace. The form shows an error and keeps the entered name for correction.
 
 Catalog managers can select **Change category** beside an item to reassign it or choose **Uncategorized**. Existing expenses and live category trends follow the new assignment; saved summaries retain their captured categories.
+
+### Saved report breakdowns
+Open any monthly or ad hoc summary to view Spending breakdown. Switch between By item, By category and By shop, and select EUR, USD, KES, GBP, CHF, CAD, AUD or original currencies. Breakdowns use frozen expenses and the report’s saved exchange rates, including existing reports. Expenses with missing prices are excluded consistently with report totals. Pending reports show original amounts until rates are available; per-group rounding can cause small differences from the overall converted total.
+
+Item details show the manufacturer. Same-name items from different manufacturers appear in a comparison panel with weighted average unit prices, quantities and differences relative to the selected item. It follows the currency/date filters and uses only your purchases; pack sizes are not normalized.
+
+Saved summary Spending breakdown includes Export as CSV. It downloads all three groupings in one Excel-compatible UTF-8 CSV with quantity and seven converted currency columns using saved rates. Export is enabled once report conversions are ready. CSV has one table (not separate workbook worksheets); the Breakdown column identifies each grouping.
+
+Overview charts use full-width stacked panels. By category supports independent Monthly, Weekly and Daily intervals and a specific period selector; All periods preserves the overall category breakdown.
+
+Spending breakdown table headers sort names, quantities and spending in ascending or descending order across all tabs. Spending sorts in the selected currency; select a single currency when viewing original amounts to enable spending sorting.

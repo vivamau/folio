@@ -68,3 +68,13 @@ Added Create summary date-range dialog with an optional title and current-month-
 - Use existing catalog-manager authorization for category reassignment; preserve creator, item name and manufacturer. Explicit null clears category.
 
 - Display item actions inline while retaining catalog permissions and 2px name-to-actions spacing.
+
+- Saved report breakdowns are computed on detail reads from immutable invoice JSON and saved FX rates; no migration or current catalog lookup is needed. Exclude unpriced invoices consistently with report totals. Group items/shops by frozen ID and categories by frozen name (historical snapshots do not contain category IDs).
+
+- Compare items by NFKC-normalized, trimmed, case-insensitive name across distinct manufacturer IDs. Reuse itemHistory for private, date/currency-filtered weighted prices and quantities. No currency conversion or package-size inference.
+
+- Export all three breakdowns in one CSV with grouping column, quantity and seven saved currency totals. CSV cannot contain Excel worksheets; use one rectangular table. Include BOM, CRLF, RFC-style quoting and formula-name escaping. Disable download while conversion rates are pending.
+
+- Category interval defines selectable calendar periods, with All periods as default. Reuse spendingPeriods/periodKey and summarize for consistent weekly boundaries and priced/currency filtering. Scope stacked layout to overview only.
+
+- Keep sort selection across breakdown tabs; compare amounts numerically in selected currency. Mixed original currencies are not comparable, so spent sorting requires a single currency. Sort copied rows without changing frozen report data or CSV.

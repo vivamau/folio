@@ -116,3 +116,19 @@ Catalog managers can Change category beside an item, selecting an existing categ
 ## Inline item actions complete
 
 View trends | Change category now appears on one line below each item name. Non-managers see only View trends. Verified 84 tests, 18 browser workflows including alignment, lint and build.
+
+## Saved summary breakdowns complete — 2026-09-16
+Added item, category and shop breakdowns with quantities and original/seven-currency totals to existing and new saved reports. Values use frozen invoices and historical saved rates. Pending and empty reports are handled. Updated README, OpenAPI and QA plan.
+Verification: lint and production build passed; all 87 unit/integration tests and 18 browser workflows passed. Coverage: statements 98.62%, branches 93.34%, functions 98.09%, lines 98.85%. Reviewed desktop screenshot; mobile overflow check passed. Earlier full runs had intermittent local HTTP response/parser failures at different test requests; isolated suite and final full run passed without weakening assertions. Git status unavailable because system Git requests Xcode license acceptance; no commits attempted.
+
+## Item manufacturer comparison complete — 2026-09-18
+Item details show manufacturer or Not specified. Separate comparison panel for same normalized item names across manufacturers shows weighted unit prices, quantities and signed differences from selected item. Shared date/currency filters and private invoice data are reused. No database changes. Red/green tests completed; lint/build passed, 89 unit/integration tests and 19 browser workflows passed. Coverage 98.64% statements, 93.35% branches, 98.14% functions, 98.87% lines. Mobile screenshot reviewed. Initial full run encountered the previously observed intermittent HTTP parser failure in unchanged snapshot tests; final full run passed.
+
+## Summary CSV export complete — 2026-09-19
+Added Export as CSV in saved report breakdowns. Downloads all three groupings with quantity and EUR/USD/KES/GBP/CHF/CAD/AUD columns using saved rates, regardless of selected tab/currency. Excel-compatible BOM and quoting, formula-name protection, pending-state disablement. Tests written and run red before implementation. Final validation: lint/build passed; 91 unit/integration tests, 19 browser workflows passed; actual downloaded CSV content verified. Coverage statements 98.67%, branches 93.33%, functions 98.18%, lines 98.89%. Initial backend run encountered socket failure; unchanged tests passed on full rerun.
+
+## Overview category periods complete — 2026-09-26
+Added independent Monthly/Weekly/Daily category interval and specific period selector, default All periods. Category amounts and share bars follow selection. Both overview panels now span full available width, category below time chart. Red/green test verified independent filters and Monday weeks. Lint/build, 92 unit/integration tests and 19 browser workflows passed; additional focused browser assertions verified selected totals and panel geometry. Coverage statements 98.68%, branches 93.39%, functions 98.20%, lines 98.90%.
+
+## Summary breakdown sorting complete — 2026-09-27
+Added ascending/descending sort buttons for item/category/shop name, quantity and selected-currency spending. Indicators and aria-sort expose state; source snapshot and CSV remain immutable. Original mixed-currency view requires selecting one currency for spending comparison. Red/green regression, lint, build and 93 unit/integration tests passed. Coverage 98.69% statements, 93.36% branches, 98.23% functions, 98.91% lines. Browser suite: 19 workflows passed, including sortable header assertions and CSV download.

@@ -140,6 +140,7 @@ test("catches up missing months including empty months and reports unpriced lega
   const june = await service.get(1, list[2].id);
   expect(june.unpricedCount).toBe(1);
   expect(june.pricedCount).toBe(0);
+  expect(june.breakdowns).toEqual({ items: [], categories: [], shops: [] });
   expect(june.totals.EUR).toBe(0);
   expect((await service.get(1, list[0].id)).invoiceCount).toBe(0);
 });
@@ -300,6 +301,11 @@ test("ad hoc ranges use their end-date rates and preserve data during a provider
   });
   expect(saved.status).toBe("pending");
   expect(fetchRates).toHaveBeenCalledWith("2026-08-15");
+  expect(saved.breakdowns.items[0]).toMatchObject({
+    originalTotals: { KES: 15000 },
+    totals: null,
+  });
+  expect(saved.breakdowns.categories[0].name).toBe("Uncategorized");
   await db.run("DELETE FROM ItemsInvoices");
   await db.run("DELETE FROM Invoices");
   clock = new Date("2026-09-01T01:00:00Z");
@@ -382,4 +388,32 @@ test("only owners can delete ad hoc summaries without affecting expenses or mont
   await admin.delete(`/api/snapshots/${pending.id}`).expect(204);
   await service.run();
   expect(await service.get(1, pending.id)).toBeNull();
+});
+
+test("saved report breakdowns use frozen lines, exclude unpriced invoices and convert saved rates", async () => {
+  await admin.post("/api/categories").send({ name: "Food" }).expect(201);
+  await db.run("UPDATE Items SET itemtype_id=1 WHERE ID=1");
+  await admin.post("/api/invoices").send(invoice("KES", "150.00")).expect(201);
+  await admin.post("/api/invoices").send(invoice("USD", "1.20")).expect(201);
+  const saved = await service.create(1, {
+    from: "2026-08-01",
+    to: "2026-08-31",
+  });
+  await db.run(
+    "UPDATE Items SET item_name='Renamed',itemtype_id=NULL WHERE ID=1",
+  );
+  const result = (await admin.get("/api/snapshots/" + saved.id).expect(200))
+    .body;
+  expect(result.breakdowns.items).toHaveLength(1);
+  expect(result.breakdowns.items[0]).toMatchObject({
+    name: "Coffee",
+    quantity: 2,
+    originalTotals: { KES: 15000, USD: 120 },
+    totals: { EUR: 200, USD: 240, KES: 30000 },
+  });
+  expect(result.breakdowns.categories[0].name).toBe("Food");
+  expect(result.breakdowns.shops[0]).toMatchObject({
+    name: "Market",
+    totals: { EUR: 200 },
+  });
 });

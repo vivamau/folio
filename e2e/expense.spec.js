@@ -86,6 +86,19 @@ test("dashboard works at desktop and mobile sizes without overflow", async ({
   }
   await page.reload();
   await expect(page.getByText("€75.40").first()).toBeVisible();
+  const categoryPanel = page.getByRole("region", { name: "By category" });
+  const timePanel = page.locator(".overview-insights > section").first();
+  const categoryBounds = await categoryPanel.boundingBox();
+  const timeBounds = await timePanel.boundingBox();
+  expect(categoryBounds.y).toBeGreaterThan(timeBounds.y + timeBounds.height);
+  expect(categoryBounds.width).toBeCloseTo(timeBounds.width, 0);
+  await page.getByLabel("Category period").selectOption("2026-09-01");
+  await expect(categoryPanel).toContainText("€32.00");
+  await page.getByLabel("Category interval").selectOption("daily");
+  await page.getByLabel("Category period").selectOption("2026-07-12");
+  await expect(categoryPanel).toContainText("€18.50");
+  await expect(page.getByLabel("Spending interval")).toHaveValue("monthly");
+  await page.getByLabel("Category interval").selectOption("monthly");
   await page.screenshot({
     path: "artifacts/dashboard-desktop.png",
     fullPage: true,

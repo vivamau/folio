@@ -10,6 +10,7 @@ import {
 import { api } from "./api";
 import { money, currencies, today } from "./format";
 import Modal from "./Modal";
+import SummaryBreakdowns from "./SummaryBreakdowns";
 const summaryName = (snapshot) =>
   snapshot.kind === "ad_hoc"
     ? snapshot.title || `${snapshot.fromDate} – ${snapshot.toDate}`
@@ -338,6 +339,7 @@ function SnapshotDetail({ snapshot, onDelete }) {
           </details>
         </>
       )}
+      <SummaryBreakdowns key={snapshot.id} snapshot={snapshot} />
       <h3>
         Saved expenses{" "}
         <span className="count-badge">{snapshot.invoiceCount}</span>

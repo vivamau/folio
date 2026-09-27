@@ -1,17 +1,31 @@
 import React, { useState } from "react";
 import {
-  ArrowUpRight,
   Receipt,
   Store,
   Wallet,
   ChartNoAxesColumnIncreasing,
 } from "lucide-react";
-import { money, summarize, spendingPeriods } from "./format";
+import { money, summarize, spendingPeriods, periodKey } from "./format";
 export default function Dashboard({ invoices, currency }) {
   const [interval, setInterval] = useState("monthly");
   const intervalName = interval[0].toUpperCase() + interval.slice(1);
   const periods = spendingPeriods(invoices, currency, interval);
   const stats = summarize(invoices, currency);
+  const [categoryInterval, setCategoryInterval] = useState("monthly");
+  const [categoryPeriod, setCategoryPeriod] = useState("all");
+  const categoryPeriods = spendingPeriods(invoices, currency, categoryInterval);
+  const selectedPeriod = categoryPeriods.some(([key]) => key === categoryPeriod)
+    ? categoryPeriod
+    : "all";
+  const categoryStats = summarize(
+    selectedPeriod === "all"
+      ? invoices
+      : invoices.filter(
+          (invoice) =>
+            periodKey(invoice.date, categoryInterval) === selectedPeriod,
+        ),
+    currency,
+  );
   const cards = [
     [
       "Total spending",
@@ -56,7 +70,7 @@ export default function Dashboard({ invoices, currency }) {
           </section>
         ))}
       </div>
-      <div className="insights-grid">
+      <div className="insights-grid overview-insights">
         <section className="panel">
           <div className="panel-heading">
             <div>
@@ -121,17 +135,52 @@ export default function Dashboard({ invoices, currency }) {
             </div>
           )}
         </section>
-        <section className="panel category-panel">
+        <section className="panel category-panel" aria-label="By category">
           <div className="panel-heading">
             <div>
               <span className="eyebrow">WHERE IT GOES</span>
               <h2>By category</h2>
             </div>
-            <ArrowUpRight size={21} />
+            <div className="category-period-controls">
+              <label className="trend-control">
+                <span>{currency}</span>
+                <select
+                  aria-label="Category interval"
+                  value={categoryInterval}
+                  onChange={(event) => {
+                    setCategoryInterval(event.target.value);
+                    setCategoryPeriod("all");
+                  }}
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="daily">Daily</option>
+                </select>
+              </label>
+              <label className="trend-control">
+                <span>Period</span>
+                <select
+                  aria-label="Category period"
+                  value={selectedPeriod}
+                  onChange={(event) => setCategoryPeriod(event.target.value)}
+                >
+                  <option value="all">All periods</option>
+                  {[...categoryPeriods].reverse().map(([key]) => (
+                    <option key={key} value={key}>
+                      {categoryInterval === "monthly"
+                        ? key.slice(0, 7)
+                        : categoryInterval === "weekly"
+                          ? "Week of " + key
+                          : key}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
-          {stats.categories.length ? (
+          {categoryStats.categories.length ? (
             <div className="category-list">
-              {stats.categories.map(([name, value], i) => (
+              {categoryStats.categories.map(([name, value], i) => (
                 <div className="category" key={name}>
                   <div>
                     <span>
@@ -152,7 +201,7 @@ export default function Dashboard({ invoices, currency }) {
                   <div className="category-track">
                     <i
                       style={{
-                        width: `${stats.total ? (value / stats.total) * 100 : 0}%`,
+                        width: `${categoryStats.total ? (value / categoryStats.total) * 100 : 0}%`,
                       }}
                     />
                   </div>

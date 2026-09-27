@@ -128,6 +128,8 @@ export default function Catalog({
     return (
       <ItemDashboard
         item={selectedItem}
+        items={catalog.items}
+        manufacturers={catalog.manufacturers}
         invoices={invoices}
         onBack={() => setSelectedItem(null)}
       />

@@ -1,4 +1,5 @@
 const { test, expect } = require("@playwright/test");
+const { readFile } = require("node:fs/promises");
 test("saved monthly picture shows all currencies and survives source deletion", async ({
   page,
 }) => {
@@ -22,6 +23,42 @@ test("saved monthly picture shows all currencies and survives source deletion", 
   await expect(page.getByRole("button", { name: "Sign out" })).toBeInViewport({
     ratio: 1,
   });
+  const breakdown = page.getByRole("region", { name: "Spending breakdown" });
+  await expect(
+    breakdown.getByRole("cell", { name: "Lunch", exact: true }),
+  ).toBeVisible();
+  await page.getByLabel("Breakdown currency").selectOption("KES");
+  await expect(breakdown.getByRole("cell", { name: /KES/ })).toBeVisible();
+  await breakdown.getByRole("button", { name: "By category" }).click();
+  await expect(
+    breakdown.getByRole("table", { name: "Spending by categories" }),
+  ).toBeVisible();
+  await breakdown.getByRole("button", { name: "By shop" }).click();
+  await expect(
+    breakdown.getByRole("cell", { name: "Archive café" }),
+  ).toBeVisible();
+  await page.getByLabel("Breakdown currency").selectOption("USD");
+  await expect(breakdown.getByRole("cell", { name: /US\$/ })).toBeVisible();
+  await breakdown.getByRole("button", { name: "Sort by Spent" }).click();
+  await expect(
+    breakdown.getByRole("columnheader", { name: /Sort by Spent/ }),
+  ).toHaveAttribute("aria-sort", "ascending");
+  await breakdown.getByRole("button", { name: "Sort by Spent" }).click();
+  await expect(
+    breakdown.getByRole("columnheader", { name: /Sort by Spent/ }),
+  ).toHaveAttribute("aria-sort", "descending");
+  const downloading = page.waitForEvent("download");
+  await breakdown.getByRole("button", { name: "Export as CSV" }).click();
+  const download = await downloading;
+  expect(download.suggestedFilename()).toMatch(
+    /^spending-breakdown-2026-08-.*\.csv$/,
+  );
+  const csv = await readFile(await download.path(), "utf8");
+  expect(csv).toContain("Breakdown,Name,Quantity,EUR,USD,KES,GBP,CHF,CAD,AUD");
+  expect(csv).toContain("By item,Lunch,1,1.00,1.20,150.00,0.80,0.90,1.50,1.60");
+  expect(csv).toContain("By category,");
+  expect(csv).toContain("By shop,Archive café,1,1.00,1.20,150.00");
+  expect(csv).not.toContain("Renamed café");
   await page.screenshot({
     path: "artifacts/monthly-summary.png",
     fullPage: true,
